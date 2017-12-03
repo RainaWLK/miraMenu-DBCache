@@ -1,0 +1,45 @@
+{
+  "name": "dbcache",
+  "version": "1.0.0",
+  "description": "Make cache from DynamoDB to Redis",
+  "main": "src/app.js",
+  "scripts": {
+    "transpile": "babel src -d build",
+    "create": "serverless create --template aws-nodejs --path myService",
+    "deploy": "npm run transpile && serverless deploy -v",
+    "package": "npm run transpile && serverless package",
+    "destroy": "serverless remove",
+    "start": "node src/app.js",
+    "help": "serverless --help"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RainaWLK/DBCache.git"
+  },
+  "author": "RainaWLK",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RainaWLK/DBCache/issues"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.0",
+    "redis": "^2.8.0",
+    "serverless": "^1.23.0",
+    "serverless-offline": "^3.16.0",
+    "serverless-plugin-include-dependencies": "^3.0.0",
+    "serverless-webpack": "^3.1.1",
+    "webpack": "^3.6.0",
+    "webpack-node-externals": "^1.6.0"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "lodash": "^4.17.4",
+    "query-string": "^5.0.0"
+  },
+  "optionalDependencies": {
+    "aws-sdk": "^2.128.0"
+  },
+  "homepage": "https://github.com/RainaWLK/DBCache#readme"
+}
