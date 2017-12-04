@@ -1,7 +1,7 @@
 let db = require('./dynamodb.js');
 const redis = require('redis');
 const client = redis.createClient({
-  url: 'redis://miramenuredis.5mm6cs.ng.0001.use1.cache.amazonaws.com:6379',
+  url: 'redis://miramenucache.5mm6cs.ng.0001.use1.cache.amazonaws.com:6379',
   retry_strategy: function(options) {
     console.log(options)
     if (options.total_retry_time > 1000) {
