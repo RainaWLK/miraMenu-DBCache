@@ -1,47 +1,58 @@
 let db = require('./dynamodb.js');
-const redis = require('redis');
-const client = redis.createClient({
-  url: 'redis://miramenucache.5mm6cs.ng.0001.use1.cache.amazonaws.com:6379',
-  retry_strategy: function(options) {
-    console.log(options)
-    if (options.total_retry_time > 1000) {
-      throw new Error('can`t connect to redis')
+
+let restaurant_cache = {};
+
+async function getRestaurant(restaurant_id){
+  let restaurantData = restaurant_cache[restaurant_id];
+
+  if(restaurantData === undefined){
+    try {
+      restaurantData = await db.queryById("Restaurants", restaurant_id);
+      //console.log("got "+restaurant_id);
     }
+    catch(err){
+      //console.log(restaurant_id+" not found");
+      restaurantData = false;
+    }
+    restaurant_cache[restaurant_id] = restaurantData;
   }
-})
-
-
-function start_redis(){
-  console.log("connecting to redis server...");
-  return new Promise((resolve, reject) => {
-    client.on('connect', () => {
-      console.log('connected');
-      resolve();
-    });
-  });
-
+  return restaurantData;
 }
 
-function setData(key, value){
-  return new Promise((resolve, reject) => {
-    client.set(key, value, (err, reply) => {
-      if(err){
-        console.log(err);
-        reject(err);
-      }
-      else{
-        console.log(reply);
-        resolve(reply);
-      }
-    });
+
+
+async function getBranches(){
+  let branchDataArray = await db.scan("Branches");
+  let validBranchDataArray = [];
+  for(let i in branchDataArray){
+    let branchData = branchDataArray[i];
+    let restaurantData = await getRestaurant(branchData.branchControl.restaurant_id);
+    if(restaurantData){
+      validBranchDataArray.push(branchData);
+    }
+  }
+
+  let DataArray = validBranchDataArray.map(branchData => {
+    let restaurant_id = branchData.branchControl.restaurant_id;
+    let restaurantData = restaurant_cache.restaurant_id;
+
+    return {
+      "restaurant": restaurantData,
+      "branch": branchData
+    }
   });
+  
+  return DataArray;
+}
+
+function makeBranchB2C(dataArray){
+  //dataArray.map()
+
 }
 
 
 async function main(){
-  await start_redis();
-
-  var params = {
+  /*var params = {
     TableName: "Branches",
     //ProjectionExpression: "#yr, title, info.rating",
     FilterExpression: "#a1.#a2 = :b",
@@ -53,16 +64,14 @@ async function main(){
          ":b": "r201700537" 
     },
     ReturnConsumedCapacity: "TOTAL"
-  };
-  let dataArray = await db.scanDataByFilter(params);
-  dataArray.map(async data => {
-    for(let i in data){
-      if(typeof data[i] === 'string'){
-        await setData(i, data[i]);
-        console.log(`set key=${i}, value=${data[i]}`);
-      }
-    }
-  });
+  };*/
+  let start_time = Date.now();
+  let dataArray = await getBranches();
+  //console.log(dataArray);
+
+  console.log("time usage: "+ (Date.now() - start_time));
+
+  console.log(Object.keys(restaurant_cache));
 }
 
 main();

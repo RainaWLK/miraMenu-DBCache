@@ -65,8 +65,8 @@ async function queryData(params) {
     try {
         let data = await docClient.query(params).promise();
         //console.log(data);
-        console.log("Consumed Capacity:");
-        console.log(data.ConsumedCapacity);
+        //console.log("Consumed Capacity:");
+        //console.log(data.ConsumedCapacity);
         return data.Items;
     }
     catch(err){
