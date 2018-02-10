@@ -1,77 +1,65 @@
-let db = require('./dynamodb.js');
+'use strict';
+let restaurant = require('./restaurant.js');
+let branch = require('./branch.js');
+let item = require('./item.js');
 
-let restaurant_cache = {};
+let update_restaurant = require('./update_restaurant.js');
+let update_branch = require('./update_branch.js');
+//let clone = require('./clone.js');
 
-async function getRestaurant(restaurant_id){
-  let restaurantData = restaurant_cache[restaurant_id];
+function parseMessageAttribute(messageAttributes){
+  let result = {};
 
-  if(restaurantData === undefined){
-    try {
-      restaurantData = await db.queryById("Restaurants", restaurant_id);
-      //console.log("got "+restaurant_id);
-    }
-    catch(err){
-      //console.log(restaurant_id+" not found");
-      restaurantData = false;
-    }
-    restaurant_cache[restaurant_id] = restaurantData;
-  }
-  return restaurantData;
-}
-
-
-
-async function getBranches(){
-  let branchDataArray = await db.scan("Branches");
-  let validBranchDataArray = [];
-  for(let i in branchDataArray){
-    let branchData = branchDataArray[i];
-    let restaurantData = await getRestaurant(branchData.branchControl.restaurant_id);
-    if(restaurantData){
-      validBranchDataArray.push(branchData);
+  for(let key in messageAttributes){
+    if(messageAttributes[key].Type === 'String'){ //drop binary attribute
+      result[key] = messageAttributes[key].Value;
     }
   }
+  return result;
+}
 
-  let DataArray = validBranchDataArray.map(branchData => {
-    let restaurant_id = branchData.branchControl.restaurant_id;
-    let restaurantData = restaurant_cache.restaurant_id;
-
-    return {
-      "restaurant": restaurantData,
-      "branch": branchData
+async function route(inputData, attr){
+  let result;
+  try {
+    console.log(attr.table);
+    switch(attr.table){
+      case 'Restaurants':
+        result = await update_restaurant.update(inputData, attr);
+        break;
+      case 'Branches':
+        result = await update_branch.update(inputData, attr);
+        break;
+      case 'Menus':
+        break;
     }
-  });
-  
-  return DataArray;
+    return result;
+  }
+  catch(err) {
+    throw err;
+  }
 }
 
-function makeBranchB2C(dataArray){
-  //dataArray.map()
+async function tools(){
+  //tools
+  //let b2cRestaurantDataArray = await restaurant.go();
+  //let b2cBranchDataArray = await branch.go();
+  let b2cItemDataArray = await item.go();
 
+  //backup
+  //await clone.go("MenusBak", "Menus");
 }
 
+async function main(sns){
+  console.log("message:");
+  let msg = JSON.parse(sns.Message);
+  console.log(msg);
 
-async function main(){
-  /*var params = {
-    TableName: "Branches",
-    //ProjectionExpression: "#yr, title, info.rating",
-    FilterExpression: "#a1.#a2 = :b",
-    ExpressionAttributeNames: {
-        "#a1": "branchControl",
-        "#a2": "restaurant_id"
-    },
-    ExpressionAttributeValues: {
-         ":b": "r201700537" 
-    },
-    ReturnConsumedCapacity: "TOTAL"
-  };*/
-  let start_time = Date.now();
-  let dataArray = await getBranches();
-  //console.log(dataArray);
+  console.log("attribute:");
+  let msgAttrs = parseMessageAttribute(sns.MessageAttributes);
+  console.log(msgAttrs);
 
-  console.log("time usage: "+ (Date.now() - start_time));
-
-  console.log(Object.keys(restaurant_cache));
+  return await route(msg, msgAttrs);
 }
 
-main();
+tools();
+exports.main = main;

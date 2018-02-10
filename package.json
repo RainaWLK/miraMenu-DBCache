@@ -5,12 +5,15 @@
   "main": "src/app.js",
   "scripts": {
     "transpile": "babel src -d build",
-    "create": "serverless create --template aws-nodejs --path myService",
-    "deploy": "npm run transpile && serverless deploy -v",
+    "create": "npm run transpile && SLS_DEBUG=* serverless deploy -v",
+    "deploy": "npm run transpile && SLS_DEBUG=* serverless deploy function -s dev -f dbupdate-dev -v",
+    "release": "npm run transpile && SLS_DEBUG=* serverless deploy function -s prod -f dbupdate  -v",
     "package": "npm run transpile && serverless package",
     "destroy": "serverless remove",
-    "start": "node src/app.js",
-    "help": "serverless --help"
+    "start": "npm run transpile && SLS_DEBUG=* serverless offline start",
+    "help": "serverless --help",
+    "test": "node test.js",
+    "tools": "node src/app.js"
   },
   "repository": {
     "type": "git",
@@ -36,7 +39,9 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "lodash": "^4.17.4",
-    "query-string": "^5.0.0"
+    "qrcode": "^1.0.0",
+    "query-string": "^5.0.0",
+    "serverless-offline-sns": "^0.30.0"
   },
   "optionalDependencies": {
     "aws-sdk": "^2.128.0"

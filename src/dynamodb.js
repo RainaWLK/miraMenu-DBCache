@@ -2,13 +2,10 @@ let AWS = require('aws-sdk');
 let _ = require('lodash');
 
 AWS.config.update({
-    region: "us-east-1"
+    region: "us-west-2"
 });
-//if (typeof Promise === 'undefined') {
-//  AWS.config.setPromisesDependency(require('bluebird'));
-//}
-//AWS.config.setPromisesDependency(require('Q').Promise);
-//const doc = require('dynamodb-doc');
+
+const dynamodb = new AWS.DynamoDB();
 const docClient = new AWS.DynamoDB.DocumentClient();
 
 async function queryDataById(tableName, id){
@@ -59,8 +56,8 @@ function queryDataByName(tableName, name){
 }
 
 async function queryData(params) {
-    console.log("==queryData==");
-    console.log(params);
+    //console.log("==queryData==");
+    //console.log(params);
 
     try {
         let data = await docClient.query(params).promise();
@@ -129,7 +126,7 @@ function postData(tableName, data){
       Item: inputData
   };
   console.log("==postData==");
-  console.log(params.Item);
+  console.log(params);
   return new Promise((resolve, reject) => {
 
       docClient.put(params).promise().then(result => {
@@ -214,6 +211,58 @@ function deleteData(tableName, data){
     
 }
 
+function batchGet(params){
+  return new Promise((resolve, reject) => {
+    params = fixEmptyValue(params);
+
+    docClient.batchGet(params).promise().then(result => {
+      console.log("Batch get succeeded:", JSON.stringify(result, null, 2));
+      resolve(result);
+    }).catch(err => {
+      console.error("Batch get fail. Error JSON:", JSON.stringify(err, null, 2));
+      reject(err);
+    });
+  });
+}
+
+function batchWrite(params){
+  return new Promise((resolve, reject) => {
+    params = fixEmptyValue(params);
+
+    console.log(params);
+    docClient.batchWrite(params).promise().then(result => {
+      console.log("Batch write succeeded:", JSON.stringify(result, null, 2));
+      resolve(result);
+    }).catch(err => {
+      console.error("Batch write fail. Error JSON:", JSON.stringify(err, null, 2));
+      reject(err);
+    });
+  });
+}
+
+async function createBackup(table){
+  let today = new Date();
+  let timeStr = today.toISOString().replace(/\:|\./g,"");
+  let params = {
+    BackupName: `${table}_${timeStr}`, /* required */
+    TableName: table /* required */
+  };
+  console.log(params);
+
+  try{
+    console.log("Create backup from "+table+" ....");
+    let data = await dynamodb.createBackup(params).promise();
+    //let data = "";
+    console.log(data);
+    return data;
+  }
+  catch(err){
+    console.error(err, err.stack);
+    throw err;
+  }
+  
+}
+
 async function unittest(){
   let table = "photo_tmp";
   const dateTime = Date.now();
@@ -260,7 +309,12 @@ exports.scan = scanData;
 exports.post = postData;
 exports.put = putData;
 exports.delete = deleteData;
+exports.batchGet = batchGet;
+exports.batchWrite = batchWrite;
+exports.createBackup = createBackup;
 
 exports.scanDataByFilter = scanDataByFilter;
+
+//exports.fixEmptyValue = fixEmptyValue;
 
 exports.unittest = unittest;
