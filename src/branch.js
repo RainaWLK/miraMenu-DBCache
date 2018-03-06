@@ -3,9 +3,11 @@ let clone = require('./clone.js');
 let qrcode = require('./qrcode.js');
 let s3 = require('./s3.js');
 let utils = require('./utils.js');
+let I18n = require('./i18n.js');
 
+let ParentTable = "Restaurants";
 let SourceTable = "Branches";
-let DestTable = "BranchesB2C";
+let DestTable = "BranchesB2C_dev";
 
 let restaurant_cache = {};
 let invalidData = [];
@@ -21,7 +23,7 @@ async function getRestaurant(restaurant_id){
   if(restaurantData === undefined){
     console.log("db query:"+restaurant_id);
     try {
-      restaurantData = await db.queryById("Restaurants", restaurant_id);
+      restaurantData = await db.queryById(ParentTable, restaurant_id);
       db_query_counter++;
       console.log("got "+restaurant_id);
     }
@@ -77,6 +79,12 @@ function makeDestData(data){
 
   let result = data.branch;
   result.restaurant_id = restaurantData.id;
+
+  result.branch_id = result.id;
+  //translate
+  let i18n = new I18n.main(branchData, this.idArray);
+  branchData = i18n.translate(this.lang);
+
   result.restaurant_name = restaurantData.name;
   result.branch_name = result.name;
   delete result.name;
