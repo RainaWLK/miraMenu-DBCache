@@ -53,6 +53,33 @@ async function writeInfoDB(data){
   return await db.postData("Branches", data);
 }
 
+function fixTable(data){
+  let result = data;
+
+  //lang
+  let defaultLang = '';
+  let newLang = {};
+  for(let key in result.i18n) {
+    if(typeof result.i18n[key].default === 'string') {
+      defaultLang = result.i18n[key].default;
+    }
+
+    for(let lang in result.i18n[key].data) {
+      if(newLang[lang] === undefined) {
+        newLang[lang] = {}
+      }
+      
+      newLang[lang][key] = result.i18n[key].data[lang];
+    }
+  }
+  if(defaultLang) {
+    newLang.default = defaultLang;
+  }
+  result.i18n = newLang;
+
+  return result;
+}
+
 async function writeDestTable(table, dataArray){
   console.log("start write...");
   var params = {
@@ -91,9 +118,9 @@ async function go(){
   let start_time = Date.now();
 
   //backup first
-  await clone.go("RestaurantsBak", SourceTable);
+  await db.createBackup(DestTable);
   
-  let dataArray = await getSourceData("Restaurants");
+  let dataArray = await getSourceData(SourceTable);
   //console.log(dataArray);
 
   let destData = dataArray.map(data => {
@@ -112,7 +139,7 @@ async function go(){
 
   statistic();
 
-  return B2CData;
+  return destData;
 }
 
 function statistic(){

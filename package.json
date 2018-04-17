@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
+    "elasticsearch": "^14.2.1",
     "lodash": "^4.17.4",
     "qrcode": "^1.0.0",
     "query-string": "^5.0.0",

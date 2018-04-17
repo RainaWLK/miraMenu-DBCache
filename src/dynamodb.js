@@ -105,9 +105,15 @@ function fixEmptyValue(data){
     else if(Array.isArray(data[i])){
       data[i] = data[i].filter(elem => {
         return elem !== "";
+      })
+      .map(elem => {
+        if(typeof elem === 'object'){
+          elem = fixEmptyValue(elem);
+        }
+        return elem;
       });
     }
-    else if(typeof data[i] == 'object'){
+    else if(typeof data[i] === 'object'){
       data[i] = fixEmptyValue(data[i]);
     }
 
@@ -213,7 +219,7 @@ function deleteData(tableName, data){
 
 function batchGet(params){
   return new Promise((resolve, reject) => {
-    params = fixEmptyValue(params);
+    //params = fixEmptyValue(params);
 
     docClient.batchGet(params).promise().then(result => {
       console.log("Batch get succeeded:", JSON.stringify(result, null, 2));
@@ -229,7 +235,7 @@ function batchWrite(params){
   return new Promise((resolve, reject) => {
     params = fixEmptyValue(params);
 
-    console.log(params);
+    //console.log(params);
     docClient.batchWrite(params).promise().then(result => {
       console.log("Batch write succeeded:", JSON.stringify(result, null, 2));
       resolve(result);
@@ -252,7 +258,6 @@ async function createBackup(table){
   try{
     console.log("Create backup from "+table+" ....");
     let data = await dynamodb.createBackup(params).promise();
-    //let data = "";
     console.log(data);
     return data;
   }
@@ -261,6 +266,31 @@ async function createBackup(table){
     throw err;
   }
   
+}
+
+async function purgeBackup(table) {
+  var params = {
+    TableName: table,
+  };
+  let data = await dynamodb.listBackups(params).promise();
+  let count = 0;
+  for(let i in data.BackupSummaries) {
+    let backup = data.BackupSummaries[i];
+    let params = {
+      BackupArn: backup.BackupArn
+    }
+    await dynamodb.deleteBackup(params).promise();
+    count++;
+    if(count >= 10){  //You can call DeleteBackup at a maximum rate of 10 times per second.
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve();
+        }, 1000);
+      });
+      count = 0;
+    }
+  }
+  return;
 }
 
 async function unittest(){

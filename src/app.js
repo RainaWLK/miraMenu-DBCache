@@ -2,6 +2,7 @@
 let restaurant = require('./restaurant.js');
 let branch = require('./branch.js');
 let item = require('./item.js');
+let branch_translated = require('./branch_translated.js');
 
 let update_restaurant = require('./update_restaurant.js');
 let update_branch = require('./update_branch.js');
@@ -43,10 +44,10 @@ async function tools(){
   //tools
   //let b2cRestaurantDataArray = await restaurant.go();
   //let b2cBranchDataArray = await branch.go();
-  let b2cItemDataArray = await item.go();
-
-  //backup
-  //await clone.go("MenusBak", "Menus");
+  //let b2cItemDataArray = await item.go();
+  
+  let b2cBranchNewDataArray = await branch_translated.go();
+  
 }
 
 async function main(sns){

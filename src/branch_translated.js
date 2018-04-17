@@ -3,9 +3,12 @@ let clone = require('./clone.js');
 let qrcode = require('./qrcode.js');
 let s3 = require('./s3.js');
 let utils = require('./utils.js');
+let I18n = require('./i18n.js');
+let es = require('./elasticsearch.js');
+let _ = require('lodash');
 
 let SourceTable = "Branches";
-let DestTable = "BranchesB2C";
+let DestTable = "BranchesB2C_dev";
 //let DestTable = "Branches";
 
 let restaurant_cache = {};
@@ -17,10 +20,10 @@ let cache_counter = 0;
 
 async function getRestaurant(restaurant_id){
   let restaurantData = restaurant_cache[restaurant_id];
-  console.log(restaurant_id+" checking..");
+  //console.log(restaurant_id+" checking..");
   data_counter++;
   if(restaurantData === undefined){
-    console.log("db query:"+restaurant_id);
+    //console.log("db query:"+restaurant_id);
     try {
       restaurantData = await db.queryById("Restaurants", restaurant_id);
       db_query_counter++;
@@ -84,27 +87,6 @@ function makeDestData(data){
 
   result.availability = (result.availability === false)?false:true;
 
-  //location
-  if((result.address === undefined)&&(typeof result.location === 'object')){
-    result.address = result.location.address;
-  }
-  if((result.tel === undefined)&&(typeof result.location === 'object')){
-    result.tel = result.location.tel;
-  }
-  if((result.geolocation === undefined)&&(typeof result.location === 'object')){
-    result.geolocation = {};
-    result.geolocation.zipcode = result.location.zipcode;
-  }
-  else if(typeof result.geolocation === 'object'){
-    result.geolocation.zipcode = result.geolocation.zipcode?result.geolocation.zipcode:0;
-  }
-  else {
-    result.geolocation = {
-      zipcode: 0
-    };
-  }
-  delete result.location;
-
   if(typeof restaurantData.i18n === 'object'){
     if(result.i18n === undefined){
       result.i18n = {};
@@ -120,35 +102,37 @@ function makeDestData(data){
     }
   }
 
+  //translate
+  let result_array = [];
+  if(_.isEmpty(result.i18n)){
+    delete result.i18n;
+    result.language = 'en-us';
+    result.branch_id = result.id;
+    result.id = result.id+'_'+result.language;
+    result_array.push(result);
+  }
+  else {
+    for(let lang in result.i18n) {
+      if(lang === 'default'){
+        continue;
+      }
+      
+      let i18n = new I18n.main(JSON.parse(JSON.stringify(result)));
+      let translatedData = i18n.translate(lang);
+      translatedData.language = lang;
+      translatedData.branch_id = translatedData.id;
+      translatedData.id = translatedData.id+'_'+lang;
+      result_array.push(translatedData);
+    }
+  }
 
-  return result;
+  return result_array;
 }
 
 async function fixTable(data){
   let result = data.branch;
 
   result.availability = (result.availability === false)?false:true;
-
-  //location
-  if((result.address === undefined)&&(typeof result.location === 'object')){
-    result.address = result.location.address;
-  }
-  if((result.tel === undefined)&&(typeof result.location === 'object')){
-    result.tel = result.location.tel;
-  }
-  if((result.geolocation === undefined)&&(typeof result.location === 'object')){
-    result.geolocation = {};
-    result.geolocation.zipcode = result.location.zipcode;
-  }
-  else if(typeof result.geolocation === 'object'){
-    result.geolocation.zipcode = result.geolocation.zipcode?result.geolocation.zipcode:0;
-  }
-  else {
-    result.geolocation = {
-      zipcode: 0
-    };
-  }
-  delete result.location;
 
   //qr code
   //let idArray = utils.parseID(result.id);
@@ -180,10 +164,55 @@ async function fixTable(data){
   if(defaultLang) {
     newLang.default = defaultLang;
   }
-  console.log(newLang);
   result.i18n = newLang;
 
   return result;
+}
+
+function makeEsData(src) {
+  let output = _.cloneDeep(src);
+  
+  delete output.i18n;
+  delete output.photos;
+  delete output.branchControl;
+  delete output.resources;
+  delete output.floor_plan;
+  delete output.tables;
+  delete output.qrcode;
+  delete output.social;
+  
+  return output;
+}
+
+async function writeEsIndex(src){
+  let body = {
+    properties: {
+      restaurant_name: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      },
+      branch_name: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      },
+      category: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      },
+      address: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      }
+    }
+  };
+
+  let esArray = src.map(element => makeEsData(element));
+  
+  return await es.createIndex('branches', 'branch_search', body, esArray);
 }
 
 async function writeInfoDB(data){
@@ -234,7 +263,6 @@ async function writeDestTable(table, dataArray){
         params.RequestItems[table].push(request);
         count++;
     
-        console.log(params);
         //batchWrite limit 25
         if(count >= 25){
           await db.batchWrite(params);
@@ -247,6 +275,10 @@ async function writeDestTable(table, dataArray){
     return;
   }
   catch(err){
+    dataArray.map(elem => {
+      console.log(elem.id);
+    });
+    
     throw err;
   }
 }
@@ -255,8 +287,7 @@ async function go(){
   let start_time = Date.now();
 
   let dataArray = await getSourceData(SourceTable);
-  //console.log(dataArray);
-
+  
   let destDataArray = [];
   for(let i in dataArray){
     let data = dataArray[i];
@@ -269,10 +300,32 @@ async function go(){
     else{
       destData = makeDestData(data);
     }
-    destDataArray.push(destData);
+    destData.forEach(element => {
+        destDataArray.push(element);
+    });
   }
 
-  //console.log(destDataArray);
+  console.log("data total: " + dataArray.length);
+  console.log("transfered data total: " + destDataArray.length);
+  //test
+  /*let testExisted = {};
+  destDataArray.forEach(element => {
+    console.log(element.id);
+    console.log(element.restaurant_id);
+    console.log(element.branch_id);
+    console.log(element.lang)
+    
+    if(testExisted[element.id] !== undefined) {
+      console.log("got dulpicated element!!");
+      console.log(element);
+    }
+    testExisted[element.id] = 1;
+    console.log("-----------------------------");
+  });*/
+  
+  //elasticsearch
+  await writeEsIndex(destDataArray);
+  //output
   await writeDestTable(DestTable, destDataArray);
   console.log("-------");
   console.log("time usage: "+ (Date.now() - start_time));
@@ -283,7 +336,7 @@ async function go(){
 }
 
 function statistic(){
-  console.log(Object.keys(restaurant_cache));
+  //console.log(Object.keys(restaurant_cache));
   console.log("data counter="+data_counter);
   console.log("db query counter="+db_query_counter);
   console.log("cache counter="+cache_counter);

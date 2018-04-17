@@ -80,9 +80,14 @@ async function makeDestData(dataObj){
     if(result.i18n === undefined){
       result.i18n = {};
     }
-
-    for(let i in restaurantData.i18n){
-      result.i18n[i] = restaurantData.i18n[i];
+    
+    for(let lang in restaurantData.i18n){
+      if(result.i18n[lang] === undefined) {
+        result.i18n[lang] = {};
+      }
+      for(let i in restaurantData.i18n[lang]) {
+        result.i18n[lang][i] = restaurantData.i18n[lang][i];
+      }
     }
   }
 

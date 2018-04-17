@@ -4,6 +4,7 @@ let utils = require('./utils.js');
 
 let SourceTable = "Menus";
 let DestTable = "ItemsB2C";
+//let DestTable = "Menus";
 
 let parent_cache = {};
 let invalidData = [];
@@ -72,7 +73,7 @@ async function getSourceData(table){
 
   let DataArray = validMenusDataArray.map(menuItemData => {
     let branchData = parent_cache[menuItemData.id];
-
+    
     return {
       "branch": branchData,
       "menus": menuItemData.menus,
@@ -107,8 +108,17 @@ function makeDestData(dataSet){
         itemData.i18n = {};
       }
   
-      for(let i in branchData.i18n){
-        itemData.i18n[i] = branchData.i18n[i];
+      //for(let i in branchData.i18n){
+      //  itemData.i18n[i] = branchData.i18n[i];
+      //}
+      
+      for(let lang in branchData.i18n){
+        if(itemData.i18n[lang] === undefined) {
+          itemData.i18n[lang] = {};
+        }
+        for(let i in branchData.i18n[lang]) {
+          itemData.i18n[lang][i] = branchData.i18n[lang][i];
+        }
       }
     }
     result.push(itemData);
@@ -117,11 +127,61 @@ function makeDestData(dataSet){
   return result;
 }
 
-async function fixTable(data){
-  let result = data.branch;
+function fixLang(orgI18n){
+  let defaultLang = '';
+  let newLang = {};
+  for(let key in orgI18n) {
+    if(typeof orgI18n[key].default === 'string') {
+      defaultLang = orgI18n[key].default;
+    }
 
+    for(let lang in orgI18n[key].data) {
+      if(newLang[lang] === undefined) {
+        newLang[lang] = {}
+      }
+      
+      newLang[lang][key] = orgI18n[key].data[lang];
+    }
+  }
+  if(defaultLang) {
+    newLang.default = defaultLang;
+  }
+  return newLang;
+}
+
+function fixTable_menus(data) {
+  let result = data;
+
+  //lang
+  result.i18n = fixLang(result.i18n);
+  
+  return result;
+}
+
+function fixTable_items(data) {
+  let result = data;
   result.availability = (result.availability === false)?false:true;
+  
+  //lang
+  result.i18n = fixLang(result.i18n);
+  
+  return result;
+}
 
+function fixTable(data){
+  let result = {
+    id: data.branch.id,
+    menus: {},
+    items: {}
+  };
+  for(let id in data.menus) {
+    result.menus[id] = fixTable_menus(data.menus[id]);
+  }
+  for(let id in data.items) {
+    result.items[id] = fixTable_items(data.items[id]);
+  }
+  //console.log(result);
+  
   return result;
 }
 
@@ -169,7 +229,7 @@ async function writeDestTable(table, dataArray){
         params.RequestItems[table].push(request);
         count++;
     
-        console.log(params);
+        //console.log(params);
         //batchWrite limit 25
         if(count >= 25){
           await db.batchWrite(params);
@@ -190,7 +250,7 @@ async function go(){
   let start_time = Date.now();
 
   //backup first
-  //await clone.go("BranchesBak", SourceTable);
+  await db.createBackup(DestTable);
   
   let dataArray = await getSourceData(SourceTable);
   //console.log(dataArray);
@@ -200,7 +260,7 @@ async function go(){
     let data = dataArray[i];
     let destData = null;
     if(SourceTable == DestTable){
-      destData = await fixTable(data);
+      destData = fixTable(data);
     }
     else{
       destData = makeDestData(data);
@@ -208,7 +268,7 @@ async function go(){
     destDataArray = destDataArray.concat(destData);
   }
 
-  console.log(destDataArray);
+  //console.log(destDataArray);
   await writeDestTable(DestTable, destDataArray);
   console.log("-------");
   console.log("time usage: "+ (Date.now() - start_time));
@@ -219,7 +279,7 @@ async function go(){
 }
 
 function statistic(){
-  console.log(Object.keys(parent_cache));
+  //console.log(Object.keys(parent_cache));
   console.log("data counter="+data_counter);
   console.log("db query counter="+db_query_counter);
   console.log("cache counter="+cache_counter);
