@@ -4,16 +4,17 @@
   "description": "Make cache from DynamoDB to Redis",
   "main": "src/app.js",
   "scripts": {
-    "transpile": "babel src -d build",
+    "transpile_old": "babel src -d build",
+    "transpile": "rm -Rf build && mkdir -p build && cp -R src/* build/",
     "create": "npm run transpile && SLS_DEBUG=* serverless deploy -v",
-    "deploy": "npm run transpile && SLS_DEBUG=* serverless deploy function -s dev -f dbupdate-dev -v",
+    "deploy": "npm run transpile && SLS_DEBUG=* serverless deploy function -s dev -f dbupdate_branch -v",
     "release": "npm run transpile && SLS_DEBUG=* serverless deploy function -s prod -f dbupdate  -v",
     "package": "npm run transpile && serverless package",
     "destroy": "serverless remove",
     "start": "npm run transpile && SLS_DEBUG=* serverless offline start",
     "help": "serverless --help",
     "test": "node test.js",
-    "tools": "node src/app.js"
+    "tools": "node src/app_tools.js"
   },
   "repository": {
     "type": "git",
@@ -26,22 +27,22 @@
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.0",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.7.0",
     "redis": "^2.8.0",
-    "serverless": "^1.23.0",
-    "serverless-offline": "^3.16.0",
-    "serverless-plugin-include-dependencies": "^3.0.0",
+    "serverless": "^1.27.2",
+    "serverless-offline": "^3.23.0",
+    "serverless-plugin-include-dependencies": "^3.1.0",
     "serverless-webpack": "^3.1.1",
-    "webpack": "^3.6.0",
-    "webpack-node-externals": "^1.6.0"
+    "webpack": "^3.12.0",
+    "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
-    "elasticsearch": "^14.2.1",
-    "lodash": "^4.17.4",
+    "elasticsearch": "^14.2.2",
+    "lodash": "^4.17.10",
     "qrcode": "^1.0.0",
-    "query-string": "^5.0.0",
+    "query-string": "^5.1.1",
     "serverless-offline-sns": "^0.30.0"
   },
   "optionalDependencies": {

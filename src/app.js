@@ -8,7 +8,7 @@ let update_restaurant = require('./update_restaurant.js');
 let update_branch = require('./update_branch.js');
 //let clone = require('./clone.js');
 
-function parseMessageAttribute(messageAttributes){
+/*function parseMessageAttribute(messageAttributes){
   let result = {};
 
   for(let key in messageAttributes){
@@ -17,20 +17,21 @@ function parseMessageAttribute(messageAttributes){
     }
   }
   return result;
-}
+}*/
 
-async function route(inputData, attr){
+async function main(src, newImage){
   let result;
   try {
-    console.log(attr.table);
-    switch(attr.table){
-      case 'Restaurants':
-        result = await update_restaurant.update(inputData, attr);
+    switch(src){
+      case 'Restaurant':
+        result = await update_restaurant.update(newImage);
         break;
-      case 'Branches':
-        result = await update_branch.update(inputData, attr);
+      case 'Branch':
+        result = await update_branch.update(newImage);
         break;
-      case 'Menus':
+      case 'Menu':
+        break;
+      case 'Item':
         break;
     }
     return result;
@@ -40,27 +41,4 @@ async function route(inputData, attr){
   }
 }
 
-async function tools(){
-  //tools
-  //let b2cRestaurantDataArray = await restaurant.go();
-  //let b2cBranchDataArray = await branch.go();
-  //let b2cItemDataArray = await item.go();
-  
-  let b2cBranchNewDataArray = await branch_translated.go();
-  
-}
-
-async function main(sns){
-  console.log("message:");
-  let msg = JSON.parse(sns.Message);
-  console.log(msg);
-
-  console.log("attribute:");
-  let msgAttrs = parseMessageAttribute(sns.MessageAttributes);
-  console.log(msgAttrs);
-
-  return await route(msg, msgAttrs);
-}
-
-tools();
 exports.main = main;

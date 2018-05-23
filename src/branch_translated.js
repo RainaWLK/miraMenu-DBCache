@@ -1,6 +1,7 @@
 let db = require('./dynamodb.js');
 let clone = require('./clone.js');
-let qrcode = require('./qrcode.js');
+let updateBranch = require("./update_branch.js");
+//let qrcode = require('./qrcode.js');
 let s3 = require('./s3.js');
 let utils = require('./utils.js');
 let I18n = require('./i18n.js');
@@ -8,7 +9,7 @@ let es = require('./elasticsearch.js');
 let _ = require('lodash');
 
 let SourceTable = "Branches";
-let DestTable = "BranchesB2C_dev";
+let DestTable = "BranchesB2C";
 //let DestTable = "Branches";
 
 let restaurant_cache = {};
@@ -18,6 +19,7 @@ let data_counter = 0;
 let db_query_counter = 0;
 let cache_counter = 0;
 
+/*
 async function getRestaurant(restaurant_id){
   let restaurantData = restaurant_cache[restaurant_id];
   //console.log(restaurant_id+" checking..");
@@ -41,9 +43,14 @@ async function getRestaurant(restaurant_id){
   }
   return restaurantData;
 }
+*/
 
-
-
+async function getSourceData(table){
+  let branchDataArray = await db.scan(table);
+  
+  return branchDataArray;
+}
+/*
 async function getSourceData(table){
   let branchDataArray = await db.scan(table);
   let validBranchDataArray = [];
@@ -101,6 +108,38 @@ function makeDestData(data){
       }
     }
   }
+  
+  //photo
+  if(_.isEmpty(result.photos)){
+    let id = "";
+    let photoData = {};
+    //find logo or main
+    for(let i in restaurantData.photos){
+      console.log(restaurantData.photos[i]);
+      if(restaurantData.photos[i].role === 'logo'){
+        id = i;
+        photoData = restaurantData.photos[i];
+        break;
+      }
+      else if(restaurantData.photos[i].role === 'main'){
+        id = i;
+        photoData = restaurantData.photos[i];
+      }
+    }
+    //if still empty, get any photo
+    if(id === ""){
+      for(let i in restaurantData.photos){
+        id = i;
+        photoData = restaurantData.photos[i];
+        break;
+      }
+    }
+    
+    if(id !== ""){
+      result.photos = {};
+      result.photos[id] = photoData;
+    }
+  }
 
   //translate
   let result_array = [];
@@ -128,6 +167,7 @@ function makeDestData(data){
 
   return result_array;
 }
+*/
 
 async function fixTable(data){
   let result = data.branch;
@@ -169,56 +209,7 @@ async function fixTable(data){
   return result;
 }
 
-function makeEsData(src) {
-  let output = _.cloneDeep(src);
-  
-  delete output.i18n;
-  delete output.photos;
-  delete output.branchControl;
-  delete output.resources;
-  delete output.floor_plan;
-  delete output.tables;
-  delete output.qrcode;
-  delete output.social;
-  
-  return output;
-}
-
-async function writeEsIndex(src){
-  let body = {
-    properties: {
-      restaurant_name: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      branch_name: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      category: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      address: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      }
-    }
-  };
-
-  let esArray = src.map(element => makeEsData(element));
-  
-  return await es.createIndex('branches', 'branch_search', body, esArray);
-}
-
-async function writeInfoDB(data){
-  return await db.postData("Branches", data);
-}
-
+/*
 async function writeDestTable(table, dataArray){
   console.log("start write...");
   var params = {
@@ -282,12 +273,14 @@ async function writeDestTable(table, dataArray){
     throw err;
   }
 }
+*/
 
 async function go(){
   let start_time = Date.now();
 
   let dataArray = await getSourceData(SourceTable);
-  
+  return await updateBranch.update(dataArray);
+  /*
   let destDataArray = [];
   for(let i in dataArray){
     let data = dataArray[i];
@@ -307,21 +300,6 @@ async function go(){
 
   console.log("data total: " + dataArray.length);
   console.log("transfered data total: " + destDataArray.length);
-  //test
-  /*let testExisted = {};
-  destDataArray.forEach(element => {
-    console.log(element.id);
-    console.log(element.restaurant_id);
-    console.log(element.branch_id);
-    console.log(element.lang)
-    
-    if(testExisted[element.id] !== undefined) {
-      console.log("got dulpicated element!!");
-      console.log(element);
-    }
-    testExisted[element.id] = 1;
-    console.log("-----------------------------");
-  });*/
   
   //elasticsearch
   await writeEsIndex(destDataArray);
@@ -332,15 +310,16 @@ async function go(){
   
   statistic();
 
-  return destDataArray;
+  return destDataArray;*/
 }
 
+/*
 function statistic(){
   //console.log(Object.keys(restaurant_cache));
   console.log("data counter="+data_counter);
   console.log("db query counter="+db_query_counter);
   console.log("cache counter="+cache_counter);
   console.log("not existed counter="+invalidData.length);
-}
+}*/
 
 exports.go = go;

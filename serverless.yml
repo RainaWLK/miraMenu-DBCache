@@ -36,7 +36,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs8.10
   versionFunctions: true # optional, default is true
 # you can overwrite defaults here
   stage: dev
@@ -124,17 +124,23 @@ package:
   excludeDevDependencies: true # Config if Serverless should automatically exclude dev dependencies in the deployment package. Defaults to true
 
 functions:
-  dbupdate:
-    handler: handler.main
-    name: ${self:custom.funcname}
+  dbupdate_branch:
+    handler: handler.updateBranch
+    name: ${self:custom.dev-funcname}-branch
     events:
-      - sns: DBUpdate
+      - stream: arn:aws:dynamodb:us-west-2:780139254791:table/Branches/stream/2018-05-18T10:31:10.616
 
-  dbupdate-dev:
-    handler: handler.main
-    name: ${self:custom.dev-funcname}
+  dbupdate_restaurant:
+    handler: handler.updateRestaurant
+    name: ${self:custom.dev-funcname}-restaurant
     events:
-      - sns: DBUpdate
+      - stream: arn:aws:dynamodb:us-west-2:780139254791:table/Restaurants/stream/2018-05-18T10:30:46.907
+
+  dbupdate_item:
+    handler: handler.updateItem
+    name: ${self:custom.dev-funcname}-item
+    events:
+      - stream: arn:aws:dynamodb:us-west-2:780139254791:table/Menus/stream/2018-05-20T08:38:54.020
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -170,59 +176,59 @@ functions:
 #      variable2: value2
 
 # you can add CloudFormation resource templates here
-resources:
-  Resources:
-    topicDBUpdate:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: DBUpdate
-        Subscription:
-        - Endpoint: 
-            Fn::Join:
-              - ''
-              - - 'arn:aws:lambda:'
-                - Ref: 'AWS::Region'
-                - ':'
-                - '780139254791'
-                - ':function:${self:custom.funcname}'
-          Protocol: lambda
-        - Endpoint: 
-            Fn::Join:
-              - ''
-              - - 'arn:aws:lambda:'
-                - Ref: 'AWS::Region'
-                - ':'
-                - '780139254791'
-                - ':function:${self:custom.dev-funcname}'
-          Protocol: lambda
-    snspolicyDBUpdate:
-      Type: AWS::SNS::TopicPolicy
-      Properties:
-        Topics:
-        - Ref: topicDBUpdate
-        PolicyDocument:
-          Version: '2008-10-17'
-          Id: __default_policy_ID
-          Statement:
-          - Sid: __default_statement_ID
-            Effect: Allow
-            Principal:
-              AWS: "*"
-            Action:
-            - SNS:GetTopicAttributes
-            - SNS:SetTopicAttributes
-            - SNS:AddPermission
-            - SNS:RemovePermission
-            - SNS:DeleteTopic
-            - SNS:Subscribe
-            - SNS:ListSubscriptionsByTopic
-            - SNS:Publish
-            - SNS:Receive
-            Resource:
-              Ref: topicDBUpdate
-            Condition:
-              StringEquals:
-                AWS:SourceOwner: '780139254791'
+#resources:
+#  Resources:
+#    topicDBUpdate:
+#      Type: AWS::SNS::Topic
+#      Properties:
+#        DisplayName: DBUpdate
+#        Subscription:
+#        - Endpoint: 
+#            Fn::Join:
+#              - ''
+#              - - 'arn:aws:lambda:'
+#                - Ref: 'AWS::Region'
+#                - ':'
+#                - '780139254791'
+#                - ':function:${self:custom.funcname}'
+#          Protocol: lambda
+#        - Endpoint: 
+#            Fn::Join:
+#              - ''
+#              - - 'arn:aws:lambda:'
+#                - Ref: 'AWS::Region'
+#                - ':'
+#                - '780139254791'
+#                - ':function:${self:custom.dev-funcname}'
+#          Protocol: lambda
+#    snspolicyDBUpdate:
+#      Type: AWS::SNS::TopicPolicy
+#      Properties:
+#        Topics:
+#        - Ref: topicDBUpdate
+#        PolicyDocument:
+#          Version: '2008-10-17'
+#          Id: __default_policy_ID
+#          Statement:
+#          - Sid: __default_statement_ID
+#            Effect: Allow
+#            Principal:
+#              AWS: "*"
+#            Action:
+#            - SNS:GetTopicAttributes
+#            - SNS:SetTopicAttributes
+#            - SNS:AddPermission
+#            - SNS:RemovePermission
+#            - SNS:DeleteTopic
+#            - SNS:Subscribe
+#            - SNS:ListSubscriptionsByTopic
+#            - SNS:Publish
+#            - SNS:Receive
+#            Resource:
+#              Ref: topicDBUpdate
+#            Condition:
+#              StringEquals:
+#                AWS:SourceOwner: '780139254791'
 
 #    NewResource:
 #      Type: AWS::S3::Bucket
