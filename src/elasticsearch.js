@@ -8,11 +8,13 @@ let connected = false;
 function checkConnection() {
   return new Promise((resolve, reject) => {
     if(connected){
+      console.log('ES already connected');
       resolve();
     }
     else {
+      console.log('check connection');
       esClient.ping({
-        requestTimeout: 30000,
+        requestTimeout: 5000,
       }, (error) => {
         if (error) {
            console.error('elasticsearch cluster is down!');
@@ -67,19 +69,19 @@ async function createIndex(index, type, schema, data) {
   }
 }
 
-async function bulkIndex(index, type, data) {
+async function bulkIndex(index, type, dataArray) {
   let bulkBody = [];
 
-  data.forEach(item => {
+  dataArray.forEach(data => {
     bulkBody.push({
       index: {
         _index: index,
         _type: type,
-        _id: item.id
+        _id: data.id
       }
     });
 
-    bulkBody.push(item);
+    bulkBody.push(data);
   });
 
   try {
@@ -93,8 +95,8 @@ async function bulkIndex(index, type, data) {
       }
     });
     console.log(
-      `Successfully indexed ${data.length - errorCount}
-       out of ${data.length} items`
+      `Successfully indexed ${dataArray.length - errorCount}
+       out of ${dataArray.length} items`
     );
     
     await indices();
@@ -105,6 +107,57 @@ async function bulkIndex(index, type, data) {
     throw err;
   }
 };
+
+async function updateIndex(index, type, data) {
+  let bulkBody = [];
+  console.log('es updateIndex');
+  
+  const insertBulk = (element) => {
+    bulkBody.push({
+      index: {
+        _index: index,
+        _type: type,
+        _id: element.id
+      }
+    });
+  
+    bulkBody.push(element);
+  };
+  
+  if(Array.isArray(data)) {
+    data.forEach(element => insertBulk(element));    
+  }
+  else {
+    insertBulk(data);
+  }
+  console.log('bulkBody=');
+  console.log(bulkBody);
+  
+  try {
+    await checkConnection();
+    console.log("------- ES bulk -----------");
+    let response = await esClient.bulk({body: bulkBody});
+    console.log("------- ES bulk done -----------");
+    let errorCount = 0;
+    response.items.forEach(item => {
+      if (item.index && item.index.error) {
+        console.log(++errorCount, item.index.error);
+        console.log(item);
+      }
+    });
+    console.log(
+      `Successfully update ${data.length - errorCount}
+       out of ${data.length} items`
+    );
+    
+    await indices();
+    return;
+  }
+  catch(err) {
+    console.err(err);
+    throw err;
+  }
+}
 
 function indices() {
   return esClient.cat.indices({v: true})
@@ -175,6 +228,7 @@ async function test(){
 
 
 exports.createIndex = createIndex;
+exports.updateIndex = updateIndex;
 exports.test = test;
 exports.search = search;
 

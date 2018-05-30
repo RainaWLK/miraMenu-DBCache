@@ -1,12 +1,7 @@
 'use strict';
-let restaurant = require('./restaurant.js');
-let branch = require('./branch.js');
-let item = require('./item.js');
-let branch_translated = require('./branch_translated.js');
-
 let update_restaurant = require('./update_restaurant.js');
 let update_branch = require('./update_branch.js');
-//let clone = require('./clone.js');
+let update_item = require('./update_item.js');
 
 /*function parseMessageAttribute(messageAttributes){
   let result = {};
@@ -32,6 +27,7 @@ async function main(src, newImage){
       case 'Menu':
         break;
       case 'Item':
+        
         break;
     }
     return result;

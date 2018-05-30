@@ -203,7 +203,13 @@ function makeEsData(src) {
   return output;
 }
 
-async function writeEsIndex(src){
+async function updateEsIndex(destDataArray) {
+  let esArray = destDataArray.map(element => makeEsData(element));
+  return await es.updateIndex('branches', 'branch_search', esArray);
+}
+
+/*
+async function createEsIndex(src){
   let body = {
     properties: {
       restaurant_name: {
@@ -233,10 +239,11 @@ async function writeEsIndex(src){
   
   return await es.createIndex('branches', 'branch_search', body, esArray);
 }
+*/
 
 async function outputDestData(dataObj){
   let destDataArray = [];
-  
+
   if(Array.isArray(dataObj)){
     dataObj.forEach(data => {
       let destData = makeDestData(data);
@@ -245,8 +252,7 @@ async function outputDestData(dataObj){
           destDataArray.push(element);
       });      
     });
-    //elasticsearch
-    await writeEsIndex(destDataArray);
+
   }
   else {
     destDataArray = makeDestData(dataObj);
@@ -267,8 +273,11 @@ async function outputDestData(dataObj){
     testExisted[element.id] = 1;
     console.log("-----------------------------");
   });*/
-  
+  //elasticsearch
+  await updateEsIndex(destDataArray);
+
   //db
+
   return await writeDestTable(DestTable, destDataArray);  
 }
 
@@ -310,3 +319,5 @@ function statistic(){
 }
 
 exports.update = update;
+exports.SourceTable = SourceTable;
+exports.outputDestData = outputDestData;

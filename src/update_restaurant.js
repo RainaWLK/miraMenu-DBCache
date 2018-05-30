@@ -8,7 +8,7 @@ let update_branch = require('./update_branch.js');
 
 async function getSourceData(inputData){
   var params = {
-      TableName: update_branch.getSourceTable(),
+      TableName: update_branch.SourceTable,
       FilterExpression: "#a1.#a2 = :b",
       ExpressionAttributeNames: {
           "#a1": "branchControl",
@@ -32,7 +32,7 @@ async function getSourceData(inputData){
   return DataArray;
 }
 
-async function update(inputData, attr){
+async function update(inputData){
   let start_time = Date.now();
 
   let dataArray = await getSourceData(inputData);
