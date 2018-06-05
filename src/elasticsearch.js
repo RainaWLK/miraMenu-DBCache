@@ -29,9 +29,7 @@ function checkConnection() {
 
 }
 
-async function createIndex(index, type, schema, data) {
-
-  
+async function initIndex(index, type, schema) {
   try {
     await checkConnection();
     console.log("====purge====");
@@ -58,8 +56,7 @@ async function createIndex(index, type, schema, data) {
     });
     console.log('elasticsearch putMapping done');
     console.log(result);
-    
-    await bulkIndex(index, type, data);
+
     return;
   }
   catch(err) {
@@ -227,7 +224,7 @@ async function test(){
 }
 
 
-exports.createIndex = createIndex;
+exports.initIndex = initIndex;
 exports.updateIndex = updateIndex;
 exports.test = test;
 exports.search = search;

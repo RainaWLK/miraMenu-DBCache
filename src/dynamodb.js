@@ -23,11 +23,6 @@ async function queryDataById(tableName, id){
 
     try {
         let dataArray = await queryData(params);
-        if(dataArray.length == 0) {
-            let err = new Error("not found");
-            err.statusCode = 404;
-            throw err;
-        }
         //debug
         if(dataArray.length > 1){
             console.log('!!!! queryDataById issue !!!!!');
@@ -56,18 +51,24 @@ function queryDataByName(tableName, name){
 }
 
 async function queryData(params) {
-    //console.log("==queryData==");
-    //console.log(params);
+    console.log("==queryData==");
+    console.log(params);
 
     try {
-        let data = await docClient.query(params).promise();
-        //console.log(data);
+        let result = await docClient.query(params).promise();
+        //console.log(result);
         //console.log("Consumed Capacity:");
-        //console.log(data.ConsumedCapacity);
-        return data.Items;
+        //console.log(result.ConsumedCapacity);
+        if(result.Items.length == 0) {
+            let err = new Error("not found");
+            err.statusCode = 404;
+            throw err;
+        }
+        return result.Items;
     }
     catch(err){
-        throw err;
+      //console.log(err);
+      throw err;
     }
 }
 
@@ -335,6 +336,7 @@ async function unittest(){
 
 exports.queryById = queryDataById;
 exports.queryDataByName = queryDataByName;
+exports.query = queryData;
 exports.scan = scanData;
 exports.post = postData;
 exports.put = putData;

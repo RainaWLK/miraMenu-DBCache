@@ -27,7 +27,7 @@ async function main(src, newImage){
       case 'Menu':
         break;
       case 'Item':
-        
+        result = await update_item.update(newImage);
         break;
     }
     return result;

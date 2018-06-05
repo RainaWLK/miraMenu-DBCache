@@ -19,36 +19,40 @@ let data_counter = 0;
 let db_query_counter = 0;
 let cache_counter = 0;
 
-/*
-async function getRestaurant(restaurant_id){
-  let restaurantData = restaurant_cache[restaurant_id];
-  //console.log(restaurant_id+" checking..");
-  data_counter++;
-  if(restaurantData === undefined){
-    //console.log("db query:"+restaurant_id);
-    try {
-      restaurantData = await db.queryById("Restaurants", restaurant_id);
-      db_query_counter++;
-      console.log("got "+restaurant_id);
-    }
-    catch(err){
-      console.log(restaurant_id+" not found");
-      restaurantData = false;
-    }
-    restaurant_cache[restaurant_id] = restaurantData;
-  }
-  else{
-    console.log(restaurant_id+" cache goted");
-    cache_counter++;
-  }
-  return restaurantData;
-}
-*/
 
 async function getSourceData(table){
   let branchDataArray = await db.scan(table);
   
   return branchDataArray;
+}
+
+async function createEsIndex(){
+  let body = {
+    properties: {
+      restaurant_name: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      },
+      branch_name: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      },
+      category: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      },
+      address: {
+        type: 'text',
+        "analyzer": "ik_smart",
+        "search_analyzer": "ik_smart"
+      }
+    }
+  };
+
+  return await es.initIndex('branches', 'branch_search', body);
 }
 /*
 async function getSourceData(table){
@@ -277,6 +281,9 @@ async function writeDestTable(table, dataArray){
 
 async function go(){
   let start_time = Date.now();
+
+  //init elasticsearch
+  createEsIndex();
 
   let dataArray = await getSourceData(SourceTable);
   return await updateBranch.update(dataArray);

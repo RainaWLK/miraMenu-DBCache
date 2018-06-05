@@ -1,6 +1,7 @@
 let db = require('./dynamodb.js');
-let clone = require('./clone.js');
 let utils = require('./utils.js');
+let updateItem = require("./update_item.js");
+let es = require('./elasticsearch.js');
 
 let SourceTable = "Menus";
 let DestTable = "ItemsB2C";
@@ -13,78 +14,33 @@ let data_counter = 0;
 let db_query_counter = 0;
 let cache_counter = 0;
 
-async function getBranch(branch_id){
-  let Branch_Table = "BranchesB2C";
-  let restaurant_query = false;
-  if(branch_id.indexOf('s') < 0){
-    Branch_Table = "Restaurants";
-    restaurant_query = true;
-  }
-
-  let branchData = parent_cache[branch_id];
-  console.log(branch_id+" checking..");
-  data_counter++;
-  if(branchData === undefined){
-    console.log("db query:"+branch_id);
-    try {
-      branchData = await db.queryById(Branch_Table, branch_id);
-      db_query_counter++;
-      console.log("got "+branch_id);
-    }
-    catch(err){
-      console.log(branch_id+" not found");
-      branchData = false;
-    }
-    if(restaurant_query){
-      //fix data
-      branchData.restaurant_id = branchData.id;
-      branchData.restaurant_name = branchData.name;
-      branchData.branch_name = branchData.name;
-      delete branchData.name;
-    }
-    parent_cache[branch_id] = branchData;
-  }
-  else{
-    console.log(branch_id+" cache goted");
-    cache_counter++;
-  }
-  return branchData;
-}
-
-
-
 async function getSourceData(table){
   let menusDataArray = await db.scan(table);
-  let validMenusDataArray = [];
-  let promises = [];
-  for(let i in menusDataArray){
-    let menuItemData = menusDataArray[i];
-    let promise = getBranch(menuItemData.id).then(branchData => {
-      if(branchData){
-        validMenusDataArray.push(menuItemData);
-      }
-      else {
-        invalidData.push(menuItemData);
-      }
-    });
-    promises.push(promise);
-  }
-  await Promise.all(promises);
-
-  let DataArray = validMenusDataArray.map(menuItemData => {
-    let branchData = parent_cache[menuItemData.id];
-    
-    return {
-      "branch": branchData,
-      "menus": menuItemData.menus,
-      "items": menuItemData.items
-    }
-  });
   
-  return DataArray;
+  return menusDataArray;
 }
 
+async function createEsIndex(){
+  let chinese_analyzer = {
+    type: 'text',
+    analyzer: 'ik_smart',
+    search_analyzer: 'ik_smart'
+  };
+  
+  let body = {
+    properties: {
+      restaurant_name: chinese_analyzer,
+      branch_name: chinese_analyzer,
+      name: chinese_analyzer,
+      category: chinese_analyzer,
+      desc: chinese_analyzer
+    }
+  };
 
+  return await es.initIndex('items', 'item_search', body);
+}
+
+/*
 function makeDestData(dataSet){
   let branchData = dataSet.branch;
   let menusData = dataSet.menus;
@@ -244,15 +200,22 @@ async function writeDestTable(table, dataArray){
   catch(err){
     throw err;
   }
-}
+}*/
 
-async function go(){
+async function go() {
   let start_time = Date.now();
 
+  //init elasticsearch
+  createEsIndex();
+
+  //transfer db
+  let dataArray = await getSourceData(SourceTable);
+  return await updateItem.update(dataArray);
+/*
   //backup first
   await db.createBackup(DestTable);
   
-  let dataArray = await getSourceData(SourceTable);
+  //let dataArray = await getSourceData(SourceTable);
   //console.log(dataArray);
 
   let destDataArray = [];
@@ -275,7 +238,7 @@ async function go(){
   
   statistic();
 
-  return destDataArray;
+  return destDataArray;*/
 }
 
 function statistic(){

@@ -208,39 +208,6 @@ async function updateEsIndex(destDataArray) {
   return await es.updateIndex('branches', 'branch_search', esArray);
 }
 
-/*
-async function createEsIndex(src){
-  let body = {
-    properties: {
-      restaurant_name: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      branch_name: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      category: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      address: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      }
-    }
-  };
-
-  let esArray = src.map(element => makeEsData(element));
-  
-  return await es.createIndex('branches', 'branch_search', body, esArray);
-}
-*/
-
 async function outputDestData(dataObj){
   let destDataArray = [];
 
