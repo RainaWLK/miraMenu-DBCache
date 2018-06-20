@@ -1,7 +1,7 @@
 'use strict';
-let update_restaurant = require('./update_restaurant.js');
-let update_branch = require('./update_branch.js');
-let update_item = require('./update_item.js');
+//let update_restaurant = require('./update_restaurant.js');
+let update_branch = require('./branch/update.js');
+let update_item = require('./item/update.js');
 
 /*function parseMessageAttribute(messageAttributes){
   let result = {};
@@ -18,9 +18,9 @@ async function main(src, newImage){
   let result;
   try {
     switch(src){
-      case 'Restaurant':
-        result = await update_restaurant.update(newImage);
-        break;
+      //case 'Restaurant':
+      //  result = await update_restaurant.update(newImage);
+      //  break;
       case 'Branch':
         result = await update_branch.update(newImage);
         break;

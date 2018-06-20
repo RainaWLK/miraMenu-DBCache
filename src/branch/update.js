@@ -1,9 +1,9 @@
-const db = require('./dynamodb.js');
-const qrcode = require('./qrcode.js');
-const s3 = require('./s3.js');
-const utils = require('./utils.js');
-let I18n = require('./i18n.js');
-let es = require('./elasticsearch.js');
+const db = require('../common/dynamodb.js');
+const qrcode = require('../common/qrcode.js');
+const s3 = require('../common/s3.js');
+const utils = require('../common/utils.js');
+let I18n = require('../common/i18n.js');
+let es = require('../common/elasticsearch.js');
 let _ = require('lodash');
 
 const SourceTable = "Branches";
@@ -257,6 +257,11 @@ async function update(inputData){
       dataObj = [];
       for(let i in inputData) {
         try {
+          console.log(inputData[i]);
+          if(inputData[i].publish === false) {
+            console.log('skip!!!!!!!!');
+            continue;
+          }
           let singleDataObj = await getSourceData(inputData[i]);
           dataObj.push(singleDataObj);
         }
@@ -266,7 +271,12 @@ async function update(inputData){
       }
     }
     else {
+      if(inputData.publish === false) {
+        console.log('skip');
+        return {};
+      }
       dataObj = await getSourceData(inputData);
+      
     }
     
     let result = await outputDestData(dataObj);

@@ -1,11 +1,10 @@
-let db = require('./dynamodb.js');
-let clone = require('./clone.js');
-let updateBranch = require("./update_branch.js");
-//let qrcode = require('./qrcode.js');
-let s3 = require('./s3.js');
-let utils = require('./utils.js');
-let I18n = require('./i18n.js');
-let es = require('./elasticsearch.js');
+let db = require('../common/dynamodb.js');
+let clone = require('../common/clone.js');
+let updateBranch = require("./update.js");
+//let qrcode = require('../common/qrcode.js');
+let s3 = require('../common/s3.js');
+let utils = require('../common/utils.js');
+let I18n = require('../common/i18n.js');
 let _ = require('lodash');
 
 let SourceTable = "Branches";
@@ -26,34 +25,6 @@ async function getSourceData(table){
   return branchDataArray;
 }
 
-async function createEsIndex(){
-  let body = {
-    properties: {
-      restaurant_name: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      branch_name: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      category: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      },
-      address: {
-        type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
-      }
-    }
-  };
-
-  return await es.initIndex('branches', 'branch_search', body);
-}
 /*
 async function getSourceData(table){
   let branchDataArray = await db.scan(table);
@@ -281,9 +252,6 @@ async function writeDestTable(table, dataArray){
 
 async function go(){
   let start_time = Date.now();
-
-  //init elasticsearch
-  createEsIndex();
 
   let dataArray = await getSourceData(SourceTable);
   return await updateBranch.update(dataArray);

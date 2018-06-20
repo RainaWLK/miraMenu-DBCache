@@ -1,7 +1,6 @@
-let db = require('./dynamodb.js');
-let utils = require('./utils.js');
-let updateItem = require("./update_item.js");
-let es = require('./elasticsearch.js');
+let db = require('../common/dynamodb.js');
+let utils = require('../common/utils.js');
+let updateItem = require("./update.js");
 
 let SourceTable = "Menus";
 let DestTable = "ItemsB2C";
@@ -18,26 +17,6 @@ async function getSourceData(table){
   let menusDataArray = await db.scan(table);
   
   return menusDataArray;
-}
-
-async function createEsIndex(){
-  let chinese_analyzer = {
-    type: 'text',
-    analyzer: 'ik_smart',
-    search_analyzer: 'ik_smart'
-  };
-  
-  let body = {
-    properties: {
-      restaurant_name: chinese_analyzer,
-      branch_name: chinese_analyzer,
-      name: chinese_analyzer,
-      category: chinese_analyzer,
-      desc: chinese_analyzer
-    }
-  };
-
-  return await es.initIndex('items', 'item_search', body);
 }
 
 /*
@@ -205,10 +184,6 @@ async function writeDestTable(table, dataArray){
 async function go() {
   let start_time = Date.now();
 
-  //init elasticsearch
-  createEsIndex();
-
-  //transfer db
   let dataArray = await getSourceData(SourceTable);
   return await updateItem.update(dataArray);
 /*

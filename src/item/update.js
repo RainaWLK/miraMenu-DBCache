@@ -1,7 +1,7 @@
-const db = require('./dynamodb.js');
-const utils = require('./utils.js');
-let I18n = require('./i18n.js');
-let es = require('./elasticsearch.js');
+const db = require('../common/dynamodb.js');
+const utils = require('../common/utils.js');
+let I18n = require('../common/i18n.js');
+let es = require('../common/elasticsearch.js');
 let _ = require('lodash');
 
 const SourceTable = "Menus";
@@ -93,7 +93,7 @@ function makeDestData(dataObj){
 
     itemData.restaurant_id = branchData.restaurant_id;
     itemData.restaurant_name = branchData.restaurant_name;
-    itemData.branch_id = branchData.id;
+    itemData.branch_id = branchData.branch_id;
     itemData.branch_name = branchData.branch_name;
 
     itemData.availability = (itemData.availability === false)?false:true;
