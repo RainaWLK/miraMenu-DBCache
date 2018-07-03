@@ -257,8 +257,8 @@ async function update(inputData){
       dataObj = [];
       for(let i in inputData) {
         try {
-          console.log(inputData[i]);
           if(inputData[i].publish === false) {
+            console.log(inputData[i]);
             console.log('skip!!!!!!!!');
             continue;
           }
@@ -272,6 +272,7 @@ async function update(inputData){
     }
     else {
       if(inputData.publish === false) {
+        console.log(inputData[i]);
         console.log('skip');
         return {};
       }

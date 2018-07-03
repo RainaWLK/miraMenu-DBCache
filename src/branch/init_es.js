@@ -61,7 +61,7 @@ async function getSourceData(table){
 
 async function go(){
   //init elasticsearch
-  createEsIndex();
+  await createEsIndex();
 
   let dataArray = await getSourceData(SourceTable);
   return await updateEsIndex(dataArray);

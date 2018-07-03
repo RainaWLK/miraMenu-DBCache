@@ -47,12 +47,15 @@ async function updateEsIndex(destDataArray) {
 async function getSourceData(table){
   let dataArray = await db.scan(table);
   
+  //for debug
+  //dataArray = dataArray.filter(element => element.item_id==='r20170041s1i1506276138595');
+
   return dataArray;
 }
 
 async function go(){
   //init elasticsearch
-  createEsIndex();
+  await createEsIndex();
 
   let dataArray = await getSourceData(SourceTable);
   return await updateEsIndex(dataArray);

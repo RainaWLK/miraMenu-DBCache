@@ -37,6 +37,7 @@ async function initIndex(index, type, schema) {
       index: index
     });
     console.log(result1);
+    console.log("====purge done====");
   }
   catch(err) {
     console.error(err);
@@ -47,15 +48,17 @@ async function initIndex(index, type, schema) {
     let result2 = await esClient.indices.create({
       index: index
     });
-    console.log(result2);
+    //console.log(result2);
+    console.log("====create done====");
     
+    console.log("====put mapping====");
     let result = await esClient.indices.putMapping({
       index : index,
       type : type,
       body: schema
     });
-    console.log('elasticsearch putMapping done');
-    console.log(result);
+    console.log('==== putMapping done ====');
+    //console.log(result);
 
     return;
   }
@@ -87,6 +90,7 @@ async function bulkIndex(index, type, dataArray) {
     let errorCount = 0;
     response.items.forEach(item => {
       if (item.index && item.index.error) {
+        console.log('bulkIndex error-->');
         console.log(++errorCount, item.index.error);
         console.log(item);
       }
@@ -127,21 +131,23 @@ async function updateIndex(index, type, data) {
   else {
     insertBulk(data);
   }
-  console.log('bulkBody=');
-  console.log(bulkBody);
+  //console.log('bulkBody=');
+  //console.log(bulkBody);
   
   try {
     await checkConnection();
     console.log("------- ES bulk -----------");
     let response = await esClient.bulk({body: bulkBody});
-    console.log("------- ES bulk done -----------");
+    
     let errorCount = 0;
     response.items.forEach(item => {
       if (item.index && item.index.error) {
+        console.log('updateIndex error');
         console.log(++errorCount, item.index.error);
         console.log(item);
       }
     });
+    console.log("------- ES bulk done -----------");
     console.log(
       `Successfully update ${data.length - errorCount}
        out of ${data.length} items`
