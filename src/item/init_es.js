@@ -55,10 +55,15 @@ async function getSourceData(table){
 
 async function go(){
   //init elasticsearch
-  await createEsIndex();
+  try {
+    await createEsIndex();
 
-  let dataArray = await getSourceData(SourceTable);
-  return await updateEsIndex(dataArray);
+    let dataArray = await getSourceData(SourceTable);
+    return await updateEsIndex(dataArray);
+  }
+  catch(err) {
+    throw err;
+  }
 }
 
 exports.go = go;

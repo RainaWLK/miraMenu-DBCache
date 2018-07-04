@@ -3,35 +3,56 @@ const esClient = new elasticsearch.Client({
   //hosts: [ 'https://vpc-miramenu-mbynmdnepcr7oxinykkzoi6qdy.us-west-2.es.amazonaws.com']
   hosts: [ 'http://ip-172-31-11-6.us-west-2.compute.internal:9200' ]
 });
-let connected = false;
+
+function sleep(wait = 0) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve();
+    }, wait);
+  })
+};
+
+async function connect() {
+  let retry = 5;
+  
+  while(retry > 0) {
+    console.log('retry:' + retry);
+    try {
+      await checkConnection();
+      return;
+    }
+    catch(err) {
+      retry--;
+      await sleep(10000);
+    }
+  }
+  return;
+}
 
 function checkConnection() {
+  let start_time = Date.now();
+  
+  console.log("check connection...");
   return new Promise((resolve, reject) => {
-    if(connected){
-      console.log('ES already connected');
+    esClient.cluster.health({
+      waitForStatus: 'yellow'
+    }, (err) => {
+      if(err) {
+        console.error('elasticsearch cluster is down!');
+        reject(err);
+        return;
+      }
+      
+      console.log(`elasticsearch ready: ${Date.now() - start_time} ms`);
       resolve();
-    }
-    else {
-      console.log('check connection');
-      esClient.ping({
-        requestTimeout: 5000,
-      }, (error) => {
-        if (error) {
-           console.error('elasticsearch cluster is down!');
-           reject();
-        } else {
-           console.log('Everything is ok');
-           resolve();
-        }
-      });
-    }
+    });
   });
 
 }
 
 async function initIndex(index, type, schema) {
   try {
-    await checkConnection();
+    await connect();
     console.log("====purge====");
     let result1 = await esClient.indices.delete({
       index: index
@@ -40,6 +61,7 @@ async function initIndex(index, type, schema) {
     console.log("====purge done====");
   }
   catch(err) {
+    console.log("====purge err====");
     console.error(err);
   }
     
