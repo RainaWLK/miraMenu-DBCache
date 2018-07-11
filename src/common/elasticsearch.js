@@ -1,7 +1,11 @@
 const elasticsearch = require('elasticsearch');
 const esClient = new elasticsearch.Client({
+  //aws elasticsearch
   //hosts: [ 'https://vpc-miramenu-mbynmdnepcr7oxinykkzoi6qdy.us-west-2.es.amazonaws.com']
-  hosts: [ 'http://ip-172-31-11-6.us-west-2.compute.internal:9200' ]
+  //ECS ALB
+  hosts: [ 'http://internal-es-alb-1720960170.us-west-2.elb.amazonaws.com:9200' ]
+  //Local
+  //hosts: [ 'http://ip-172-31-11-6.us-west-2.compute.internal:9200' ]
 });
 
 function sleep(wait = 0) {
@@ -53,19 +57,20 @@ function checkConnection() {
 async function initIndex(index, type, schema) {
   try {
     await connect();
-    console.log("====purge====");
-    let result1 = await esClient.indices.delete({
+    console.log("====check existed====");
+    let index_existed = await esClient.indices.exists({
       index: index
     });
-    console.log(result1);
-    console.log("====purge done====");
-  }
-  catch(err) {
-    console.log("====purge err====");
-    console.error(err);
-  }
-    
-  try {
+
+    if(index_existed) {
+      console.log("====purge====");
+      let result1 = await esClient.indices.delete({
+        index: index
+      });
+      console.log(result1);
+      console.log("====purge done====");
+    }
+
     console.log("====create====");
     let result2 = await esClient.indices.create({
       index: index
@@ -126,7 +131,7 @@ async function bulkIndex(index, type, dataArray) {
     return;
   }
   catch(err) {
-    console.err(err);
+    console.error(err);
     throw err;
   }
 };
@@ -179,7 +184,7 @@ async function updateIndex(index, type, data) {
     return;
   }
   catch(err) {
-    console.err(err);
+    console.error(err);
     throw err;
   }
 }
@@ -193,19 +198,30 @@ function indices() {
 async function search(index, body) {
   try {
     await checkConnection();
+    console.log(`keyword: ${body.query.multi_match.query}`);
     let response = await esClient.search({index: index, body: body});
     console.log(`found ${response.hits.total} items in ${response.took}ms`);
     console.log(`returned article titles:`);
-    let result = response.hits.hits.map(
-      (hit, index) => {
-        console.log(`\t${body.from + ++index} - ${hit._source.id}`);
-        return hit._source.id;
-    })
-    console.log(result);
-    return result;
+    let result = response.hits.hits.filter((hit, index) => {
+      console.log(`${body.from + ++index} ` + 
+        `- ${hit._source.id} ` +
+        `- ${hit._source.restaurant_name} : ${hit._source.branch_name} ` + 
+        `- ${hit._score}`);
+      return hit._score > 0;
+    }).map(hit => {
+        return {
+          id: hit._source.id,
+          score: hit._score
+        }
+    });
+    
+    //sort
+    return result.sort((a,b) => {
+      return a.score - b.score
+    }).map(a => a.id);
   }
   catch(err) {
-    console.err(err);
+    console.error(err);
     throw err;
   }
 }
