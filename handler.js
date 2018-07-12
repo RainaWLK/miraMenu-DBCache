@@ -42,3 +42,12 @@ module.exports.updateRestaurant = (event, context, callback) => {
 module.exports.updateItem = (event, context, callback) => {
   return main("Item", event, context, callback);
 };
+
+module.exports.initES = (event, context, callback) => {
+  console.log('initES');
+  console.log(event);
+  console.log(context);
+  console.log(event.detail.attributes);
+
+  callback(null, "OK");
+}

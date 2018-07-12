@@ -15,7 +15,10 @@ let cache_counter = 0;
 
 async function getSourceData(table){
   let menusDataArray = await db.scan(table);
-  
+
+  //for debug
+  //let menusDataArray = await db.queryById(table, 'r1528125059703s1528125119706');
+
   return menusDataArray;
 }
 

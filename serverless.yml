@@ -41,7 +41,13 @@ provider:
 # you can overwrite defaults here
   stage: dev
   region: us-west-2
-
+# VPC
+  vpc:
+      securityGroupIds:
+        - sg-a9ae7ed6
+      subnetIds:
+        - subnet-bd239fe7
+        - subnet-866a7cce
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
     - Effect: "Allow"
@@ -89,6 +95,32 @@ provider:
             - ':'
             - '780139254791'
             - ':table/BranchesB2C'
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:BatchWriteItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+      Resource:
+        Fn::Join:
+          - ''
+          - - 'arn:aws:dynamodb:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - '780139254791'
+            - ':table/ItemsB2C'
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:BatchWriteItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+      Resource:
+        Fn::Join:
+          - ''
+          - - 'arn:aws:dynamodb:'
+            - Ref: 'AWS::Region'
+            - ':'
+            - '780139254791'
+            - ':table/MenusB2C'
 #    - Effect: "Allow"
 #      Action:
 #        - "s3:ListBucket"
@@ -141,6 +173,22 @@ functions:
     name: ${self:custom.dev-funcname}-item
     events:
       - stream: arn:aws:dynamodb:us-west-2:780139254791:table/Menus/stream/2018-05-20T08:38:54.020
+
+  init_es_data:
+    handler: handler.initES
+    name: init_es_data
+    timeout: 60
+    events:
+      - cloudwatchEvent:
+          event:
+            source:
+              - "aws.ecs"            
+            detail-type:
+              - "ECS Task State Change"
+              - "ECS Container Instance State Change"
+            detail:
+              clusterArn:
+                - "arn:aws:ecs:us-west-2:780139254791:cluster/miramenu-cluster"
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
