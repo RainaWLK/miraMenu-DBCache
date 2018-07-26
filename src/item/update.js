@@ -187,6 +187,8 @@ function makeEsData(src) {
 
 async function updateEsIndex(destDataArray) {
   let esArray = destDataArray.map(element => makeEsData(element));
+  console.log('esArray=');
+  console.log(esArray);
   return await es.updateIndex('items', 'item_search', esArray);
 }
 
@@ -221,7 +223,13 @@ async function outputDestData(dataObj){
     testExisted[element.id] = 1;
     console.log("-----------------------------");
   });
+  if(_.isEmpty(destDataArray)) {
+    console.log('dest data is empty, skip');
+    return;
+  }
   //elasticsearch
+  console.log('destDataArray=');
+  console.log(destDataArray);
   await updateEsIndex(destDataArray);
 
   //db
@@ -248,6 +256,10 @@ async function update(inputData){
     else {
       dataObj = await getSourceData(inputData);
     }
+    console.log('source data=');
+    console.log(dataObj.branch);
+    console.log(dataObj.menus);
+    console.log(dataObj.items);
     let result = await outputDestData(dataObj);
     console.log("-------");
     console.log(`count: ${dataObj.length}`);
