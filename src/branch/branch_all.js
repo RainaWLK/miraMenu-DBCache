@@ -19,13 +19,13 @@ let db_query_counter = 0;
 let cache_counter = 0;
 
 
-async function getSourceData(table){
-  let branchDataArray = await db.scan(table);
+async function getTargetData(table){
+  let dataArray = await db.scan(table);
   
   //for debug
-  //let branchDataArray = await db.queryById(table, 'r1528786306942s1529481171083');
+  //let dataArray = await db.queryById(table, 'r1528786306942s1529481171083');
   
-  return branchDataArray;
+  return dataArray;
 }
 
 async function fixTable(data){
@@ -137,7 +137,7 @@ async function writeDestTable(table, dataArray){
 async function go(){
   let start_time = Date.now();
 
-  let dataArray = await getSourceData(SourceTable);
+  let dataArray = await getTargetData(SourceTable);
   return await updateBranch.update(dataArray);
   /*
   let destDataArray = [];

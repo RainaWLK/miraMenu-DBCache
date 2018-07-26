@@ -1,6 +1,7 @@
 'use strict';
 //let update_restaurant = require('./update_restaurant.js');
 let update_branch = require('./branch/update.js');
+let update_menu = require('./menu/update.js');
 let update_item = require('./item/update.js');
 
 /*function parseMessageAttribute(messageAttributes){
@@ -25,6 +26,7 @@ async function main(src, newImage){
         result = await update_branch.update(newImage);
         break;
       case 'Menu':
+        result = await update_menu.update(newImage);
         break;
       case 'Item':
         result = await update_item.update(newImage);

@@ -13,13 +13,13 @@ let data_counter = 0;
 let db_query_counter = 0;
 let cache_counter = 0;
 
-async function getSourceData(table){
-  let menusDataArray = await db.scan(table);
+async function getTargetData(table){
+  let dataArray = await db.scan(table);
 
   //for debug
-  //let menusDataArray = await db.queryById(table, 'r1528125059703s1528125119706');
+  //let dataArray = await db.queryById(table, 'r1528125059703s1528125119706');
 
-  return menusDataArray;
+  return dataArray;
 }
 
 /*
@@ -187,7 +187,7 @@ async function writeDestTable(table, dataArray){
 async function go() {
   let start_time = Date.now();
 
-  let dataArray = await getSourceData(SourceTable);
+  let dataArray = await getTargetData(SourceTable);
   return await updateItem.update(dataArray);
 /*
   //backup first

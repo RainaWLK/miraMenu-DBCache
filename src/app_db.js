@@ -1,11 +1,14 @@
 'use strict';
-let item = require('./item/item.js');
-let branch_translated = require('./branch/branch_translated.js');
+let branch_all = require('./branch/branch_all.js');
+let menu_all = require('./menu/menu_all.js');
+let item_all = require('./item/item_all.js');
+
 
 async function writeDB(){
   //tools
-  await branch_translated.go();
-  await item.go();
+  //await branch_all.go();
+  await menu_all.go();
+  //await item_all.go();
 }
 
 writeDB();
