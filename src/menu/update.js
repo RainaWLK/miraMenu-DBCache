@@ -10,75 +10,7 @@ const DestTable = "MenusB2C";
 let data_counter = 0;
 let db_query_counter = 0;
 
-async function getBranch(branch_id){
-  try {
-    let params = {};
-    
-    let restaurant_query = false;
-    if(branch_id.indexOf('s') > 0){
-      params = {
-        TableName: "BranchesB2C",
-        IndexName: "branch_id-index",
-        KeyConditionExpression: "#n = :n",
-        ExpressionAttributeNames:{
-            "#n": "branch_id"
-        },
-        ExpressionAttributeValues: {
-            ":n": branch_id
-        }
-      };
-    }
-    else {
-      params = {
-        TableName: "Restaurants",
-        KeyConditionExpression: "#n = :n",
-        ExpressionAttributeNames:{
-            "#n": "id"
-        },
-        ExpressionAttributeValues: {
-            ":n": branch_id
-        }
-      };
-      restaurant_query = true;
-    }
-    
-    console.log("db query:"+branch_id);
-    let branchDataArray = await db.query(params);
-    let branchData = branchDataArray[0];
-    console.log("got "+branch_id);
-    
-    if(restaurant_query){
-      //fix data
-      branchData.restaurant_id = branchData.id;
-      branchData.restaurant_name = branchData.name;
-      branchData.branch_name = branchData.name;
-      delete branchData.name;
-    }
-
-    return branchData;
-  }
-  catch(err){
-    console.log(branch_id+" not found");
-    throw null;
-  }
-
-}
-
-
-async function getSourceData(menuItemData){
-  try {
-    let branchData = await getBranch(menuItemData.id);
-    return {
-      "branch": branchData,
-      "menus": menuItemData.menus,
-      "items": menuItemData.items
-    }
-  }
-  catch(err) {
-    throw null;
-  }
-}
-
+let id_delete = [];
 
 function makeDestData(dataObj){
   let branchData = dataObj.branch;
@@ -86,53 +18,65 @@ function makeDestData(dataObj){
   let itemsData = dataObj.items;
   
   let result = [];
-  for(let i in itemsData) {
-    let itemData = itemsData[i];
+  id_delete = [];
+  for(let i in menusData) {
+    let menuData = menusData[i];
+    
+    menuData.id = i;
 
-    itemData.id = i;
+    menuData.restaurant_id = branchData.restaurant_id;
+    menuData.restaurant_name = branchData.restaurant_name;
+    menuData.branch_id = branchData.branch_id;
+    menuData.branch_name = branchData.branch_name;
 
-    itemData.restaurant_id = branchData.restaurant_id;
-    itemData.restaurant_name = branchData.restaurant_name;
-    itemData.branch_id = branchData.branch_id;
-    itemData.branch_name = branchData.branch_name;
-
-    itemData.availability = (itemData.availability === false)?false:true;
+    menuData.availability = (menuData.availability === false)?false:true;
+    delete menuData.resources;
+    delete menuData.menuControl;
 
     if(typeof branchData.i18n === 'object'){
-      if(itemData.i18n === undefined){
-        itemData.i18n = {};
+      if(menuData.i18n === undefined){
+        menuData.i18n = {};
       }
       
       for(let lang in branchData.i18n){
-        if(itemData.i18n[lang] === undefined) {
-          itemData.i18n[lang] = {};
+        if(menuData.i18n[lang] === undefined) {
+          menuData.i18n[lang] = {};
         }
         for(let i in branchData.i18n[lang]) {
-          itemData.i18n[lang][i] = branchData.i18n[lang][i];
+          menuData.i18n[lang][i] = branchData.i18n[lang][i];
         }
       }
     }
     
     //translate
-    if(_.isEmpty(itemData.i18n)){
-      delete itemData.i18n;
-      itemData.language = 'en-us';
-      itemData.item_id = itemData.id;
-      itemData.id = itemData.id+'_'+itemData.language;
-      result.push(itemData);
+    if(_.isEmpty(menuData.i18n)){
+      delete menuData.i18n;
+      menuData.language = 'en-us';
+      menuData.menu_id = menuData.id;
+      menuData.id = menuData.id+'_'+menuData.language;
+      if(menuData.publish === false) {
+        id_delete.push(menuData.id);
+      } else {
+        result.push(menuData);
+      }
+      
     }
     else {
-      for(let lang in itemData.i18n) {
+      for(let lang in menuData.i18n) {
         if(lang === 'default'){
           continue;
         }
         
-        let i18n = new I18n.main(JSON.parse(JSON.stringify(itemData)));
+        let i18n = new I18n.main(JSON.parse(JSON.stringify(menuData)));
         let translatedData = i18n.translate(lang);
         translatedData.language = lang;
-        translatedData.item_id = translatedData.id;
+        translatedData.menu_id = translatedData.id;
         translatedData.id = translatedData.id+'_'+lang;
-        result.push(translatedData);
+        if(menuData.publish === false) {
+          id_delete.push(translatedData.id);
+        } else {
+          result.push(translatedData);
+        }
       }
     }
   }
@@ -148,8 +92,7 @@ async function writeDestTable(table, dataArray){
   params.RequestItems[table] = [];
 
   try{
-    let count = 0;
-    for(let i in dataArray){
+    for(let i in dataArray) {
       let data = dataArray[i];
   
       let request = {
@@ -158,16 +101,17 @@ async function writeDestTable(table, dataArray){
         }
       }
       params.RequestItems[table].push(request);
-      count++;
-  
-      //batchWrite limit 25
-      if(count >= 25){
-        await db.batchWrite(params);
-        params.RequestItems[table] = [];
-        count = 0;
-      }
     }
-    return await db.batchWrite(params);
+    //clean
+    for(let id in id_delete) {
+      let request = {
+        DeleteRequest: {
+          Key: { id: id_delete[id] }
+        }
+      }
+      params.RequestItems[table].push(request);
+    }
+    let writeResult = await db.batchWrite(params);
   }
   catch(err){
     throw err;
@@ -179,7 +123,7 @@ function makeEsData(src) {
   
   delete output.i18n;
   delete output.photos;
-  delete output.itemControl;
+  delete output.menuControl;
   delete output.resources;
   
   return output;
@@ -187,7 +131,7 @@ function makeEsData(src) {
 
 async function updateEsIndex(destDataArray) {
   let esArray = destDataArray.map(element => makeEsData(element));
-  return await es.updateIndex('items', 'item_search', esArray);
+  return await es.updateIndex('menus', 'menu_search', esArray);
 }
 
 async function outputDestData(dataObj){
@@ -209,17 +153,11 @@ async function outputDestData(dataObj){
   //test
   let testExisted = {};
   destDataArray.forEach(element => {
-    console.log(element.id);
-    //console.log(element.branch_id);
-    //console.log(element.item_id);
-    //console.log(element.language)
-    
     if(testExisted[element.id] !== undefined) {
       console.log("got dulpicated element!!");
       console.log(element);
     }
     testExisted[element.id] = 1;
-    console.log("-----------------------------");
   });
   //elasticsearch
   await updateEsIndex(destDataArray);
@@ -228,43 +166,15 @@ async function outputDestData(dataObj){
   return await writeDestTable(DestTable, destDataArray);  
 }
 
-async function update(inputData){
-  let start_time = Date.now();
-
-  try {
-    let dataObj;
-    if(Array.isArray(inputData)) {
-      dataObj = [];
-      for(let i in inputData) {
-        try {
-          let singleDataObj = await getSourceData(inputData[i]);
-          dataObj.push(singleDataObj);
-        }
-        catch(err){
-          //continue
-        }
-      }
-    }
-    else {
-      dataObj = await getSourceData(inputData);
-    }
-    let result = await outputDestData(dataObj);
-    console.log("-------");
-    console.log(`count: ${dataObj.length}`);
-    console.log("time usage: "+ (Date.now() - start_time));
-    return result;
-  }
-  catch(err) {
-    throw err;
-  }
-}
-
 function statistic(){
 //  console.log(Object.keys(restaurant_cache));
 //  console.log("data counter="+data_counter);
 //  console.log("db query counter="+db_query_counter);
 }
 
-exports.update = update;
+//exports.update = update;
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
+
+//for test
+exports.makeDestData = makeDestData;

@@ -35,10 +35,6 @@ module.exports.updateRestaurant = (event, context, callback) => {
   return main("Restaurant", event, context, callback);
 };
 
-//module.exports.updateMenu = (event, context, callback) => {
-//  return main("Menu", event, context, callback);
-//};
-
 module.exports.updateItem = (event, context, callback) => {
   return main("Item", event, context, callback);
 };

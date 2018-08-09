@@ -162,7 +162,6 @@ async function writeDestTable(table, dataArray){
   params.RequestItems[table] = [];
 
   try{
-    let count = 0;
     for(let i in dataArray){
       let data = dataArray[i];
   
@@ -172,14 +171,6 @@ async function writeDestTable(table, dataArray){
         }
       }
       params.RequestItems[table].push(request);
-      count++;
-  
-      //batchWrite limit 25
-      if(count >= 25){
-        await db.batchWrite(params);
-        params.RequestItems[table] = [];
-        count = 0;
-      }
     }
     return await db.batchWrite(params);
   }

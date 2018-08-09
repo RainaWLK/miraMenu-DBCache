@@ -3,6 +3,7 @@ const utils = require('../common/utils.js');
 let I18n = require('../common/i18n.js');
 let es = require('../common/elasticsearch.js');
 let _ = require('lodash');
+let updateMenu = require('../menu/update.js');
 
 const SourceTable = "Menus";
 const DestTable = "ItemsB2C";
@@ -97,6 +98,8 @@ function makeDestData(dataObj){
     itemData.branch_name = branchData.branch_name;
 
     itemData.availability = (itemData.availability === false)?false:true;
+    delete itemData.resources;
+    delete itemData.itemControl;
 
     if(typeof branchData.i18n === 'object'){
       if(itemData.i18n === undefined){
@@ -148,7 +151,6 @@ async function writeDestTable(table, dataArray){
   params.RequestItems[table] = [];
 
   try{
-    let count = 0;
     for(let i in dataArray){
       let data = dataArray[i];
   
@@ -158,14 +160,6 @@ async function writeDestTable(table, dataArray){
         }
       }
       params.RequestItems[table].push(request);
-      count++;
-  
-      //batchWrite limit 25
-      if(count >= 25){
-        await db.batchWrite(params);
-        params.RequestItems[table] = [];
-        count = 0;
-      }
     }
     return await db.batchWrite(params);
   }
@@ -187,8 +181,8 @@ function makeEsData(src) {
 
 async function updateEsIndex(destDataArray) {
   let esArray = destDataArray.map(element => makeEsData(element));
-  console.log('esArray=');
-  console.log(esArray);
+  //console.log('esArray=');
+  //console.log(esArray);
   return await es.updateIndex('items', 'item_search', esArray);
 }
 
@@ -211,25 +205,19 @@ async function outputDestData(dataObj){
   //test
   let testExisted = {};
   destDataArray.forEach(element => {
-    console.log(element.id);
-    //console.log(element.branch_id);
-    //console.log(element.item_id);
-    //console.log(element.language)
-    
     if(testExisted[element.id] !== undefined) {
       console.log("got dulpicated element!!");
       console.log(element);
     }
     testExisted[element.id] = 1;
-    console.log("-----------------------------");
   });
   if(_.isEmpty(destDataArray)) {
     console.log('dest data is empty, skip');
     return;
   }
   //elasticsearch
-  console.log('destDataArray=');
-  console.log(destDataArray);
+  //console.log('destDataArray=');
+  //console.log(destDataArray);
   await updateEsIndex(destDataArray);
 
   //db
@@ -256,11 +244,10 @@ async function update(inputData){
     else {
       dataObj = await getSourceData(inputData);
     }
-    console.log('source data=');
-    console.log(dataObj.branch);
-    console.log(dataObj.menus);
-    console.log(dataObj.items);
     let result = await outputDestData(dataObj);
+    
+    //menu
+    result = await updateMenu.outputDestData(dataObj);
     console.log("-------");
     console.log(`count: ${dataObj.length}`);
     console.log("time usage: "+ (Date.now() - start_time));
@@ -280,3 +267,7 @@ function statistic(){
 exports.update = update;
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
+
+//for test
+exports.getSourceData = getSourceData;
+exports.makeDestData = makeDestData;

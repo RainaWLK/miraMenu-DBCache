@@ -3,8 +3,8 @@ let utils = require('../common/utils.js');
 let updateItem = require("./update.js");
 
 let SourceTable = "Menus";
-//let DestTable = "MenusB2C";
-let DestTable = "Menus";
+let DestTable = "MenusB2C";
+//let DestTable = "Menus";
 
 let parent_cache = {};
 let invalidData = [];
