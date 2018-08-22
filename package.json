@@ -18,7 +18,7 @@
     "start": "npm run transpile && SLS_DEBUG=* serverless offline start",
     "start:db": "node src/app_db.js",
     "start:es": "node src/app_es.js",
-    "test": "mocha test/*.js --delay"
+    "test": "mocha test/es.js --delay"
   },
   "repository": {
     "type": "git",

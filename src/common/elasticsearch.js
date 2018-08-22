@@ -3,9 +3,9 @@ const esClient = new elasticsearch.Client({
   //aws elasticsearch
   //hosts: [ 'https://vpc-miramenu-mbynmdnepcr7oxinykkzoi6qdy.us-west-2.es.amazonaws.com']
   //ECS ALB
-  hosts: [ 'http://internal-es-alb-1720960170.us-west-2.elb.amazonaws.com:9200' ]
+  //hosts: [ 'http://internal-es-alb-1720960170.us-west-2.elb.amazonaws.com:9200' ]
   //Local
-  //hosts: [ 'http://ip-172-31-11-6.us-west-2.compute.internal:9200' ]
+  hosts: [ 'http://34.212.234.43:9200' ]
 });
 
 function sleep(wait = 0) {
@@ -87,7 +87,7 @@ async function initIndex(index, type, schema) {
     console.log('==== putMapping done ====');
     //console.log(result);
 
-    return;
+    return esClient;
   }
   catch(err) {
     console.error('elasticsearch error');
@@ -189,6 +189,21 @@ async function updateIndex(index, type, data) {
   }
 }
 
+async function deleteIndex(index) {
+  try {
+    console.log("====purge====");
+    let result1 = await esClient.indices.delete({
+      index: index
+    });
+    console.log(result1);
+    console.log("====purge done====");
+  }
+  catch(err) {
+    console.error(err);
+    throw err;
+  }
+}
+
 function indices() {
   return esClient.cat.indices({v: true})
   .then(console.log)
@@ -228,7 +243,7 @@ async function search(index, body) {
 
 async function test(){
   let INDEX = 'library';
-  await createIndex('branches', []);
+  await createIndex('branches_test', []);
   await indices();
   
   return esClient.indices.getMapping({
@@ -270,6 +285,7 @@ async function test(){
 
 exports.initIndex = initIndex;
 exports.updateIndex = updateIndex;
+exports.deleteIndex = deleteIndex;
 exports.test = test;
 exports.search = search;
 
