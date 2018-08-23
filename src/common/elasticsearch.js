@@ -3,9 +3,9 @@ const esClient = new elasticsearch.Client({
   //aws elasticsearch
   //hosts: [ 'https://vpc-miramenu-mbynmdnepcr7oxinykkzoi6qdy.us-west-2.es.amazonaws.com']
   //ECS ALB
-  //hosts: [ 'http://internal-es-alb-1720960170.us-west-2.elb.amazonaws.com:9200' ]
+  hosts: [ 'http://internal-es-alb-1720960170.us-west-2.elb.amazonaws.com:9200' ]
   //Local
-  hosts: [ 'http://34.212.234.43:9200' ]
+  //hosts: [ 'http://34.212.234.43:9200' ]
 });
 
 function sleep(wait = 0) {
@@ -36,7 +36,6 @@ async function connect() {
 function checkConnection() {
   let start_time = Date.now();
   
-  console.log("check connection...");
   return new Promise((resolve, reject) => {
     esClient.cluster.health({
       waitForStatus: 'yellow'
@@ -96,49 +95,8 @@ async function initIndex(index, type, schema) {
   }
 }
 
-async function bulkIndex(index, type, dataArray) {
-  let bulkBody = [];
-
-  dataArray.forEach(data => {
-    bulkBody.push({
-      index: {
-        _index: index,
-        _type: type,
-        _id: data.id
-      }
-    });
-
-    bulkBody.push(data);
-  });
-
-  try {
-    await checkConnection();
-    let response = await esClient.bulk({body: bulkBody});
-    let errorCount = 0;
-    response.items.forEach(item => {
-      if (item.index && item.index.error) {
-        console.log('bulkIndex error-->');
-        console.log(++errorCount, item.index.error);
-        console.log(item);
-      }
-    });
-    console.log(
-      `Successfully indexed ${dataArray.length - errorCount}
-       out of ${dataArray.length} items`
-    );
-    
-    await indices();
-    return;
-  }
-  catch(err) {
-    console.error(err);
-    throw err;
-  }
-};
-
 async function updateIndex(index, type, data) {
   let bulkBody = [];
-  console.log('es updateIndex');
   
   const insertBulk = (element) => {
     bulkBody.push({
@@ -158,12 +116,9 @@ async function updateIndex(index, type, data) {
   else {
     insertBulk(data);
   }
-  //console.log('bulkBody=');
-  //console.log(bulkBody);
   
   try {
     await checkConnection();
-    console.log("------- ES bulk -----------");
     let response = await esClient.bulk({body: bulkBody});
     
     let errorCount = 0;
@@ -174,14 +129,12 @@ async function updateIndex(index, type, data) {
         console.log(item);
       }
     });
-    console.log("------- ES bulk done -----------");
     console.log(
-      `Successfully update ${data.length - errorCount}
-       out of ${data.length} items`
+      `Successfully update ${bulkBody.length/2 - errorCount}
+       out of ${bulkBody.length/2} items`
     );
-    
-    await indices();
-    return;
+
+    return response;
   }
   catch(err) {
     console.error(err);
@@ -189,7 +142,7 @@ async function updateIndex(index, type, data) {
   }
 }
 
-async function deleteIndex(index) {
+async function deleteIndice(index) {
   try {
     console.log("====purge====");
     let result1 = await esClient.indices.delete({
@@ -197,6 +150,37 @@ async function deleteIndex(index) {
     });
     console.log(result1);
     console.log("====purge done====");
+  }
+  catch(err) {
+    console.error(err);
+    throw err;
+  }
+}
+
+async function getIndex(index, type, id) {
+  try {
+    const response = await esClient.get({
+      index: index,
+      type: type,
+      id: id
+    });
+    return response._source;
+  }
+  catch(err) {
+    console.error(err);
+    throw err;
+  }
+
+}
+
+async function deleteIndex(index, type, id) {
+  try {
+    const response = await esClient.delete({
+      index: index,
+      type: type,
+      id: id
+    });
+    return response;
   }
   catch(err) {
     console.error(err);
@@ -218,14 +202,18 @@ async function search(index, body) {
     console.log(`found ${response.hits.total} items in ${response.took}ms`);
     console.log(`returned article titles:`);
     let result = response.hits.hits.filter((hit, index) => {
-      console.log(`${body.from + ++index} ` + 
-        `- ${hit._source.id} ` +
-        `- ${hit._source.restaurant_name} : ${hit._source.branch_name} ` + 
-        `- ${hit._score}`);
+      //log
+      let output_log = `${body.from + ++index} - ${hit._source.id} - `;
+      
+      body.query.multi_match.fields.forEach(fields => {
+        output_log += `${hit._source[fields]} : `;
+      });
+      output_log += ` - ${hit._score}`;
+      console.log(output_log);
       return hit._score > 0;
     }).map(hit => {
         return {
-          id: hit._source.id,
+          _source: hit._source,
           score: hit._score
         }
     });
@@ -233,7 +221,7 @@ async function search(index, body) {
     //sort
     return result.sort((a,b) => {
       return a.score - b.score
-    }).map(a => a.id);
+    }).map(a => a._source);
   }
   catch(err) {
     console.error(err);
@@ -241,88 +229,9 @@ async function search(index, body) {
   }
 }
 
-async function test(){
-  let INDEX = 'library';
-  await createIndex('branches_test', []);
-  await indices();
-  
-  return esClient.indices.getMapping({
-    index: INDEX,
-    type: 'branches'
-  }).then(results => {
-    console.log(results[INDEX].mappings['branches']);
-  });
-  
-  
-  let body = {
-    size: 20,
-    from: 0,
-    query: {
-      multi_match: {
-        query: 'deer',
-        fields: ['restaurant_name', 'branch_name',  'category'],
-        fuzziness: 2
-      }
-    }
-  };
-
-  /*return esClient.search({index: 'library', body: body})
-  .then(results => {
-    console.log(`found ${results.hits.total} items in ${results.took}ms`);
-    console.log(`returned article titles:`);
-    results.hits.hits.forEach(
-      (hit, index) => console.log(
-        `\t${body.from + ++index} - ${hit._source.id}`
-      )
-    )
-  })
-  .catch(err => {
-    console.log('err');
-    console.error(err);
-  });*/
-}
-
-
 exports.initIndex = initIndex;
+exports.getIndex = getIndex;
 exports.updateIndex = updateIndex;
 exports.deleteIndex = deleteIndex;
-exports.test = test;
+exports.deleteIndice = deleteIndice;
 exports.search = search;
-
-
-/*
-client.indices.putMapping({
-    index : 'test',
-    type : 'branches',
-    body : {
-        branches: {
-            properties: {
-                title: {
-                    type: 'string',
-                    term_vector: 'with_positions_offsets',
-                    analyzer: 'ik_syno',
-                    search_analyzer: 'ik_syno',
-                },
-                content: {
-                    type: 'string',
-                    term_vector: 'with_positions_offsets',
-                    analyzer: 'ik_syno',
-                    search_analyzer: 'ik_syno',
-                },
-                slug: {
-                    type: 'string',
-                },
-                tags: {
-                    type: 'string',
-                    index : 'not_analyzed',
-                },
-                update_date: {
-                    type : 'date',
-                    index : 'not_analyzed',
-                }
-            }
-        }
-    }
-});
-
-*/

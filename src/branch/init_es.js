@@ -9,23 +9,20 @@ async function createEsIndex(){
     properties: {
       restaurant_name: {
         type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
+        "analyzer": "ik_smart"
+        //"search_analyzer": "ik_smart"
       },
       branch_name: {
         type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
+        "analyzer": "ik_smart"
       },
       category: {
         type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
+        "analyzer": "ik_smart"
       },
       address: {
         type: 'text',
-        "analyzer": "ik_smart",
-        "search_analyzer": "ik_smart"
+        "analyzer": "ik_smart"
       }
     }
   };
