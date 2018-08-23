@@ -1,3 +1,4 @@
+let _ = require('lodash');
 const elasticsearch = require('elasticsearch');
 const esClient = new elasticsearch.Client({
   //aws elasticsearch
@@ -97,6 +98,10 @@ async function initIndex(index, type, schema) {
 
 async function updateIndex(index, type, data) {
   let bulkBody = [];
+  
+  if(_.isEmpty(data)) {
+    return { errors: false };
+  }
   
   const insertBulk = (element) => {
     bulkBody.push({

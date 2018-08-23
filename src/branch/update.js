@@ -12,6 +12,8 @@ const DestTable = "BranchesB2C";
 let data_counter = 0;
 let db_query_counter = 0;
 
+let id_delete = [];
+
 async function getRestaurant(restaurant_id){
   console.log("db query:"+restaurant_id);
   try {
@@ -135,6 +137,11 @@ function makeDestData(dataObj){
     result.branch_id = result.id;
     result.id = result.id+'_'+result.language;
     result_array.push(result);
+    if(result.publish === false) {
+      id_delete.push(result.id);
+    } else {
+      result_array.push(result);
+    }
   }
   else {
     for(let lang in result.i18n) {
@@ -147,7 +154,11 @@ function makeDestData(dataObj){
       translatedData.language = lang;
       translatedData.branch_id = translatedData.id;
       translatedData.id = translatedData.id+'_'+lang;
-      result_array.push(translatedData);
+      if(result.publish === false) {
+        id_delete.push(translatedData.id);
+      } else {
+        result_array.push(translatedData);
+      }
     }
   }
 
@@ -172,6 +183,19 @@ async function writeDestTable(table, dataArray){
       }
       params.RequestItems[table].push(request);
     }
+    //clean
+    for(let i in id_delete) {
+      let request = {
+        DeleteRequest: {
+          Key: { id: id_delete[i] }
+        }
+      }
+      params.RequestItems[table].push(request);
+      //es
+      await es.deleteIndex('branches', 'branch_search', id_delete[i]);
+    }
+    id_delete = [];
+
     return await db.batchWrite(params);
   }
   catch(err){
@@ -248,11 +272,6 @@ async function update(inputData){
       dataObj = [];
       for(let i in inputData) {
         try {
-          if(inputData[i].publish === false) {
-            console.log(inputData[i]);
-            console.log('skip!!!!!!!!');
-            continue;
-          }
           let singleDataObj = await getSourceData(inputData[i]);
           dataObj.push(singleDataObj);
         }
@@ -262,13 +281,7 @@ async function update(inputData){
       }
     }
     else {
-      if(inputData.publish === false) {
-        console.log(inputData[i]);
-        console.log('skip');
-        return {};
-      }
       dataObj = await getSourceData(inputData);
-      
     }
     
     let result = await outputDestData(dataObj);

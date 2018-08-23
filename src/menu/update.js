@@ -113,6 +113,7 @@ async function writeDestTable(table, dataArray){
       //es
       await es.deleteIndex('menus', 'menu_search', id_delete[i]);
     }
+    id_delete = [];
     let writeResult = await db.batchWrite(params);
   }
   catch(err){
