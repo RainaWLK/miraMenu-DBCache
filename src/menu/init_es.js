@@ -11,8 +11,8 @@ const ES_FIELD = "menu_search";
 async function createEsIndex(){
   let chinese_analyzer = {
     type: 'text',
-    analyzer: 'ik_smart',
-    search_analyzer: 'ik_smart'
+    analyzer: 'ik_smart'
+    //search_analyzer: 'ik_smart'
   };
   
   let body = {
