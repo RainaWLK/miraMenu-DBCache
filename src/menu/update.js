@@ -103,13 +103,15 @@ async function writeDestTable(table, dataArray){
       params.RequestItems[table].push(request);
     }
     //clean
-    for(let id in id_delete) {
+    for(let i in id_delete) {
       let request = {
         DeleteRequest: {
-          Key: { id: id_delete[id] }
+          Key: { id: id_delete[i] }
         }
       }
       params.RequestItems[table].push(request);
+      //es
+      await es.deleteIndex('menus', 'menu_search', id_delete[i]);
     }
     let writeResult = await db.batchWrite(params);
   }
