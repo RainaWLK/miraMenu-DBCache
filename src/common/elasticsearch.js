@@ -57,24 +57,21 @@ function checkConnection() {
 async function initIndex(index, type, schema) {
   try {
     await connect();
-    console.log("====check existed====");
-    let index_existed = await esClient.indices.exists({
+    let params = {
       index: index
-    });
+    };
+    console.log("====check existed====");
+    let index_existed = await esClient.indices.exists(params);
 
     if(index_existed) {
       console.log("====purge====");
-      let result1 = await esClient.indices.delete({
-        index: index
-      });
+      let result1 = await esClient.indices.delete(params);
       console.log(result1);
       console.log("====purge done====");
     }
 
     console.log("====create====");
-    let result2 = await esClient.indices.create({
-      index: index
-    });
+    let result2 = await esClient.indices.create(params);
     //console.log(result2);
     console.log("====create done====");
     
@@ -180,11 +177,17 @@ async function getIndex(index, type, id) {
 
 async function deleteIndex(index, type, id) {
   try {
-    const response = await esClient.delete({
+    let params = {
       index: index,
       type: type,
-      id: id
-    });
+      id: id     
+    };
+    let response = null;
+    const exists = await esClient.exists(params);
+    console.log('exists='+exists);
+    if(exists) {
+      response = await esClient.delete(params);
+    }
     return response;
   }
   catch(err) {
