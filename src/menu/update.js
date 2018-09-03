@@ -85,7 +85,7 @@ function makeDestData(dataObj){
 }
 
 async function writeDestTable(table, dataArray){
-  console.log("start write...");
+  console.log("start menu write...");
   var params = {
     RequestItems: {}
   };
@@ -103,6 +103,7 @@ async function writeDestTable(table, dataArray){
       params.RequestItems[table].push(request);
     }
     //clean
+    console.log(id_delete);
     for(let i in id_delete) {
       let request = {
         DeleteRequest: {
@@ -114,6 +115,7 @@ async function writeDestTable(table, dataArray){
       await es.deleteIndex('menus', 'menu_search', id_delete[i]);
     }
     id_delete = [];
+    console.log(JSON.stringify(params));
     let writeResult = await db.batchWrite(params);
   }
   catch(err){

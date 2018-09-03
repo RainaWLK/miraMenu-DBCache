@@ -35,19 +35,46 @@ async function queryDataById(tableName, id){
 
 }
 
-function queryDataByName(tableName, name){
-    var params = {
-        TableName : tableName,
-        KeyConditionExpression: "#n = :n",
-        ExpressionAttributeNames:{
-            "#n": "name"
-        },
-        ExpressionAttributeValues: {
-            ":n":name
-        }
-    };
+async function queryByKey(tableName, indexName, keyName, key, filterParams){
+  var params = {
+    TableName : tableName,
+    KeyConditionExpression: "#key = :key",
+    ExpressionAttributeNames:{
+        "#key": keyName
+    },
+    ExpressionAttributeValues: {
+        ":key":key
+    },
+    ReturnConsumedCapacity: "TOTAL"
+  };
 
-    return queryData(params);
+  if(indexName !== null) {
+    params.IndexName = indexName;
+  }
+  if(typeof filterParams === 'object') {
+    for(let i in filterParams.ExpressionAttributeNames) {
+      params.ExpressionAttributeNames[i] = filterParams.ExpressionAttributeNames[i];
+    }
+    for(let i in filterParams.ExpressionAttributeValues) {
+      params.ExpressionAttributeValues[i] = filterParams.ExpressionAttributeValues[i];
+    }
+    params.FilterExpression = filterParams.FilterExpression;
+  }
+
+  try {
+    let dataArray = await queryData(params);
+    if(dataArray.length == 0) {
+      let err = new Error("not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    return dataArray;
+  }
+  catch(err) {
+      throw err;
+  }
+
 }
 
 async function queryData(params) {
@@ -370,7 +397,7 @@ async function unittest(){
 }
 
 exports.queryById = queryDataById;
-exports.queryDataByName = queryDataByName;
+exports.queryByKey = queryByKey;
 exports.query = queryData;
 exports.scan = scanData;
 exports.post = postData;

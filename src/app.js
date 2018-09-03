@@ -1,5 +1,3 @@
-'use strict';
-//let update_restaurant = require('./update_restaurant.js');
 let update_branch = require('./branch/update.js');
 let update_item = require('./item/update.js');
 
@@ -14,13 +12,28 @@ let update_item = require('./item/update.js');
   return result;
 }*/
 
+async function deleteData(src, newImage) {
+  let result;
+  try {
+    switch(src){
+      case 'Branch':
+        result = await update_branch.deleteData(newImage);
+        break;
+      case 'Item':
+        result = await update_item.deleteData(newImage);
+        break;
+    }
+    return result;
+  }
+  catch(err) {
+    throw err;
+  }
+}
+
 async function main(src, newImage){
   let result;
   try {
     switch(src){
-      //case 'Restaurant':
-      //  result = await update_restaurant.update(newImage);
-      //  break;
       case 'Branch':
         result = await update_branch.update(newImage);
         break;
@@ -36,3 +49,4 @@ async function main(src, newImage){
 }
 
 exports.main = main;
+exports.deleteData = deleteData;

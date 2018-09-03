@@ -4,26 +4,30 @@ let app = require('./build/app.js');
 
 
 function main(src, event, context, callback) {
-  //console.log(event);
-  //console.log(context);
-  //console.log(event.Records[0].dynamodb);
+  console.log(event);
+  console.log(context);
   
-  let key = event.Records[0].dynamodb.Keys.id.S;
-  let newImage = AWS.DynamoDB.Converter.unmarshall(event.Records[0].dynamodb.NewImage);  
-  //console.log(key);
-  //console.log(newImage);
+  for(let i in event.Records) {
+    let record = event.Records[i];
+    console.log(record.dynamodb);
   
-  app.main(src, newImage).then(data => {
-    console.log('job done');
-    callback(null, JSON.stringify(data)); 
-  }).catch(err => {
-    callback(err); 
-  });
+    let newImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);  
 
-
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  //callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
-
+    let result = null;
+    if(record.eventName === 'REMOVE') {
+      result = app.deleteData(src, record.dynamodb.Keys.id.S);
+    }
+    else {
+      result = app.main(src, newImage);
+    }
+    
+    result.then(data => {
+      console.log('job done');
+      callback(null, JSON.stringify(data)); 
+    }).catch(err => {
+      callback(err); 
+    });
+  }
 }
 
 module.exports.updateBranch = (event, context, callback) => {

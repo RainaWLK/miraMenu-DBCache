@@ -144,7 +144,7 @@ function makeDestData(dataObj){
 }
 
 async function writeDestTable(table, dataArray){
-  console.log("start write...");
+  console.log("start item write...");
   var params = {
     RequestItems: {}
   };
@@ -161,6 +161,7 @@ async function writeDestTable(table, dataArray){
       }
       params.RequestItems[table].push(request);
     }
+    console.log(JSON.stringify(params));
     return await db.batchWrite(params);
   }
   catch(err){
@@ -258,6 +259,12 @@ async function update(inputData){
   }
 }
 
+async function deleteData(key) {
+  console.log('remove '+key);
+  
+  return;
+}
+
 function statistic(){
 //  console.log(Object.keys(restaurant_cache));
 //  console.log("data counter="+data_counter);
@@ -265,6 +272,7 @@ function statistic(){
 }
 
 exports.update = update;
+exports.deleteData = deleteData;
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
 

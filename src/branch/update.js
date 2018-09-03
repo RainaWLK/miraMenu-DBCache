@@ -294,6 +294,41 @@ async function update(inputData){
   }
 }
 
+async function deleteData(key) {
+  try {
+    let table = 'BranchesB2C';
+    console.log('remove '+key);
+    let dataArray = await db.queryByKey(table, 'branch_id-index', 'branch_id', key);
+    console.log(dataArray);
+    //delete
+    var params = {
+      RequestItems: {}
+    };
+    params.RequestItems[table] = [];
+  
+    try{
+      for(let i in dataArray) {
+        let request = {
+          DeleteRequest: {
+            Key: { id: dataArray[i].id }
+          }
+        }
+        params.RequestItems[table].push(request);
+        //es
+        await es.deleteIndex('branches', 'branch_search', dataArray[i].id);
+      }
+      console.log(params.RequestItems[table]);
+      return await db.batchWrite(params);
+    }
+    catch(err){
+      throw err;
+    }
+  }
+  catch(err) {
+    throw err;
+  }
+}
+
 function statistic(){
 //  console.log(Object.keys(restaurant_cache));
 //  console.log("data counter="+data_counter);
@@ -301,5 +336,6 @@ function statistic(){
 }
 
 exports.update = update;
+exports.deleteData = deleteData;
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
