@@ -1,7 +1,9 @@
+const _ = require('lodash');
 const chai = require('chai');
 const expect = chai.expect;
 const item = require('../src/item/update.js');
 const menu = require('../src/menu/update.js');
+const menuClean = require('../src/menu/clean.js');
 let sample = require('./sample.json');
 
 chai.use(require('chai-things'));
@@ -24,6 +26,31 @@ describe('test source data', () => {
     expect(sourceData).to.have.property('items');
   })
 
+});
+
+describe('unit test: clean', () => {
+  it('test clean', async () => {
+    let id_delete = [];
+    let testData = _.cloneDeep(sample);
+    testData.branch = {
+      branch_id: sample.id
+    };
+    delete testData.id;
+    const test_id = 'r1528985006837s1528985080610m1528985346450';
+    const dest_id = [];
+    for(let i in testData.menus[test_id].i18n) {
+      if( i === 'default') {
+        continue;
+      }
+      dest_id.push(`${test_id}_${i}`);
+    }
+    
+    delete testData.menus[test_id];
+    await menuClean.getIdDelete(testData, id_delete);
+    
+    expect(id_delete).to.have.members(dest_id);
+  });
+  
 });
 
 describe('test dest data', async () => {

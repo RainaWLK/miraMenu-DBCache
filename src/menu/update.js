@@ -2,6 +2,7 @@ const db = require('../common/dynamodb.js');
 const utils = require('../common/utils.js');
 let I18n = require('../common/i18n.js');
 let es = require('../common/elasticsearch.js');
+const menuClean = require('./clean.js');
 let _ = require('lodash');
 
 const SourceTable = "Menus";
@@ -103,20 +104,11 @@ async function writeDestTable(table, dataArray){
       params.RequestItems[table].push(request);
     }
     //clean
-    console.log(id_delete);
-    for(let i in id_delete) {
-      let request = {
-        DeleteRequest: {
-          Key: { id: id_delete[i] }
-        }
-      }
-      params.RequestItems[table].push(request);
-      //es
-      await es.deleteIndex('menus', 'menu_search', id_delete[i]);
-    }
-    id_delete = [];
-    console.log(JSON.stringify(params));
+    //console.log(JSON.stringify(params));
     let writeResult = await db.batchWrite(params);
+    
+    await menuClean.clean(id_delete);
+    id_delete = [];
   }
   catch(err){
     throw err;
@@ -141,6 +133,9 @@ async function updateEsIndex(destDataArray) {
 
 async function outputDestData(dataObj){
   let destDataArray = [];
+  
+  //clean deleted b2c data first
+  await menuClean.go(dataObj);
 
   if(Array.isArray(dataObj)){
     dataObj.forEach(data => {
@@ -177,7 +172,6 @@ function statistic(){
 //  console.log("db query counter="+db_query_counter);
 }
 
-//exports.update = update;
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
 

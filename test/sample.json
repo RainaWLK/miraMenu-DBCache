@@ -185,6 +185,74 @@
           "name": "i18n::res-i18n-1528986435118-8"
         }
       ]
+    },
+    "r1528985006837s1528985080610m1528985346451": {
+      "availability": true,
+      "category": "Dinner",
+      "desc": "i18n::res-i18n-1528985346880-2",
+      "i18n": {
+        "default": "en-US",
+        "en-US": {
+          "res-i18n-1528985346880-0": "菜單",
+          "res-i18n-1528985346880-2": "菜單2",
+          "res-i18n-1528985346880-4": "好男人灑淚必吃",
+          "res-i18n-1528986312677-8": "好男人必喝啤酒"
+        },
+        "zh-TW": {
+          "res-i18n-1528985346880-0": "菜單",
+          "res-i18n-1528985346880-1": "菜單",
+          "res-i18n-1528985346880-4": "好男人灑淚必吃",
+          "res-i18n-1528985674938-6": "好男人啤酒",
+          "res-i18n-1528986341077-6": "好男人必喝啤酒",
+          "res-i18n-1528986435118-6": "好男人必喝啤酒",
+          "res-i18n-1528986435118-8": "undefined"
+        }
+      },
+      "menu_hours": "Mon 9:00-12:00, 17:00-23:00; Tue 6:00-9:00, 11:00-13:30, 17:00-23:00",
+      "menuControl": {},
+      "name": "i18n::res-i18n-1528985346880-0",
+      "publish": true,
+      "photos": {
+        "p1528985347278-0": {
+          "mimetype": "image/jpeg",
+          "size": {
+            "height": 1472,
+            "width": 1963
+          },
+          "url": {
+            "huge": "https://cdn.mira.menu/restaurants/r1528985006837/branches/s1528985080610/menus/m1528985346450/photos/p1528985347278-0_huge.jpg",
+            "large": "https://cdn.mira.menu/restaurants/r1528985006837/branches/s1528985080610/menus/m1528985346450/photos/p1528985347278-0_large.jpg",
+            "medium": "https://cdn.mira.menu/restaurants/r1528985006837/branches/s1528985080610/menus/m1528985346450/photos/p1528985347278-0_medium.jpg",
+            "original": "https://cdn.mira.menu/restaurants/r1528985006837/branches/s1528985080610/menus/m1528985346450/photos/p1528985347278-0.jpg",
+            "small": "https://cdn.mira.menu/restaurants/r1528985006837/branches/s1528985080610/menus/m1528985346450/photos/p1528985347278-0_small.jpg"
+          }
+        }
+      },
+      "resources": {},
+      "sections": [
+        {
+          "id": 0,
+          "items": [
+            "r1528985006837s1528985080610i1528985219077",
+            "r1528985006837s1528985080610i1528985622951"
+          ],
+          "name": "i18n::res-i18n-1528985346880-4"
+        },
+        {
+          "id": 1,
+          "items": [
+            "r1528985006837s1528985080610i1528985622951"
+          ],
+          "name": "i18n::res-i18n-1528986435118-6"
+        },
+        {
+          "id": 2,
+          "items": [
+            "r1528985006837s1528985080610i1528985622951"
+          ],
+          "name": "i18n::res-i18n-1528986435118-8"
+        }
+      ]
     }
   }
 }
