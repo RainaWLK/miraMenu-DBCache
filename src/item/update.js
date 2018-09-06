@@ -2,6 +2,7 @@ const db = require('../common/dynamodb.js');
 const utils = require('../common/utils.js');
 let I18n = require('../common/i18n.js');
 let es = require('../common/elasticsearch.js');
+const itemClean = require('./clean.js');
 let _ = require('lodash');
 let updateMenu = require('../menu/update.js');
 
@@ -189,6 +190,9 @@ async function updateEsIndex(destDataArray) {
 
 async function outputDestData(dataObj){
   let destDataArray = [];
+  
+  //clean deleted b2c data first
+  await itemClean.go(dataObj);
 
   if(Array.isArray(dataObj)){
     dataObj.forEach(data => {
