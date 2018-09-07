@@ -43,8 +43,7 @@ async function getBranch(branch_id){
       };
       restaurant_query = true;
     }
-    
-    console.log("db query:"+branch_id);
+
     let branchDataArray = await db.query(params);
     let branchData = branchDataArray[0];
     console.log("got "+branch_id);
@@ -56,6 +55,7 @@ async function getBranch(branch_id){
       branchData.branch_name = branchData.name;
       delete branchData.name;
     }
+    branchData.restaurant_query = restaurant_query;
 
     return branchData;
   }
@@ -145,7 +145,6 @@ function makeDestData(dataObj){
 }
 
 async function writeDestTable(table, dataArray){
-  console.log("start item write...");
   var params = {
     RequestItems: {}
   };
@@ -162,7 +161,6 @@ async function writeDestTable(table, dataArray){
       }
       params.RequestItems[table].push(request);
     }
-    console.log(JSON.stringify(params));
     return await db.batchWrite(params);
   }
   catch(err){

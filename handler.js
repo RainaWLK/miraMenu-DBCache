@@ -9,9 +9,8 @@ function main(src, event, context, callback) {
   
   for(let i in event.Records) {
     let record = event.Records[i];
-    console.log(record.dynamodb);
-  
-    let newImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);  
+    let newImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
+    console.log(JSON.stringify(newImage));
 
     let result = null;
     if(record.eventName === 'REMOVE') {

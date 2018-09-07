@@ -78,9 +78,6 @@ async function queryByKey(tableName, indexName, keyName, key, filterParams){
 }
 
 async function queryData(params) {
-    //console.log("==queryData==");
-    //console.log(params);
-
     try {
         let result = await docClient.query(params).promise();
         //console.log(result);
@@ -262,7 +259,6 @@ function batchGet(params){
 async function batchWrite(inputParams){
   let runBatchWrite = async (params) => {
     try {
-      console.log(params);
       let result = await docClient.batchWrite(params).promise();
       console.log("Batch write succeeded:", JSON.stringify(result, null, 2));
       return result;

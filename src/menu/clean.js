@@ -8,9 +8,14 @@ const DestTable = "MenusB2C";
 
 async function getIdDelete(newData, id_delete) {
   try {
-    let branch_id = newData.branch.branch_id;
     let newMenusData = newData.menus;
-    let sourceDataArray = await db.queryByKey('MenusB2C', 'branch_id-index', 'branch_id', branch_id);
+    let sourceDataArray = null;
+    if(newData.branch.restaurant_query === false) {
+      let branch_id = newData.branch.branch_id;
+      sourceDataArray = await db.queryByKey('MenusB2C', 'branch_id-index', 'branch_id', branch_id);
+    } else {
+      return;
+    }
   
     //search non-existed
     sourceDataArray.forEach(menuData => {
