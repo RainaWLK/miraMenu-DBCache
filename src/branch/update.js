@@ -306,25 +306,24 @@ async function deleteData(key) {
     };
     params.RequestItems[table] = [];
   
-    try{
-      for(let i in dataArray) {
-        let request = {
-          DeleteRequest: {
-            Key: { id: dataArray[i].id }
-          }
+    for(let i in dataArray) {
+      let request = {
+        DeleteRequest: {
+          Key: { id: dataArray[i].id }
         }
-        params.RequestItems[table].push(request);
-        //es
-        await es.deleteIndex('branches', 'branch_search', dataArray[i].id);
       }
-      console.log(params.RequestItems[table]);
-      return await db.batchWrite(params);
+      params.RequestItems[table].push(request);
+      //es
+      await es.deleteIndex('branches', 'branch_search', dataArray[i].id);
     }
-    catch(err){
-      throw err;
-    }
+    console.log(params.RequestItems[table]);
+    return await db.batchWrite(params);
   }
   catch(err) {
+    if(err.statusCode === 404) {
+      console.log('no data need to be clean, skip');
+      return;
+    }
     throw err;
   }
 }
