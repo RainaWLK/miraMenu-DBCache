@@ -1,3 +1,4 @@
+let _ = require('lodash');
 const AWS = require('aws-sdk');
 const translate = new AWS.Translate({
   region: 'us-west-2'
@@ -34,6 +35,10 @@ async function doTranstale(sourceLang, targetLang, text) {
 
     //aws translate support english translation only
     if(sourcelangCode !== 'en' && targetlangCode !== 'en') {
+      return null;
+    }
+
+    if(_.isEmpty(text)) {
       return null;
     }
 
