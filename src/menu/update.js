@@ -143,6 +143,7 @@ async function updateEsIndex_MenuItem(destDataArray) {
       }
       let esData = section.items.map(item_id => {
         return {
+          id: element.id,
           menu_id: element.menu_id,
           item_id: item_id,
           section_name: section.name
