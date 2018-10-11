@@ -33,7 +33,8 @@ describe('unit test: clean', () => {
     let id_delete = [];
     let testData = _.cloneDeep(sample);
     testData.branch = {
-      branch_id: sample.id
+      branch_id: sample.id,
+      restaurant_query: false
     };
     delete testData.id;
     const test_id = 'r1528985006837s1528985080610m1528985346450';
@@ -118,8 +119,23 @@ describe('test dest data', async () => {
     });
   });
 
-  
-  run();  
 });
+
+describe('test elasticsearch', async () => {
+  let sourceData;
+  let destDataArray;
+  
+  sourceData = await item.getSourceData(sample);
+  destDataArray = menu.makeDestData(sourceData);
+  
+  it('generate es index data', () => {
+    menu.updateEsIndex_MenuItem(destDataArray);
+  });
+  
+  
+  
+  
+  run();
+})
 
 });

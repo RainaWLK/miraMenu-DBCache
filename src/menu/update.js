@@ -131,6 +131,30 @@ async function updateEsIndex(destDataArray) {
   return await es.updateIndex('menus', 'menu_search', esArray);
 }
 
+async function updateEsIndex_MenuItem(destDataArray) {
+  let esDataArray = [];
+  destDataArray.forEach(element => {
+    if(typeof element.sections !== 'object') {
+      return;
+    }
+    element.sections.forEach(section => {
+      if(typeof section.items !== 'object') {
+        return;
+      }
+      let esData = section.items.map(item_id => {
+        return {
+          menu_id: element.menu_id,
+          item_id: item_id,
+          section_name: section.name
+        }
+      });
+      esDataArray = esDataArray.concat(esData);
+    });
+    
+  });
+  return await es.updateIndex('menuitem', 'menuItem_search', esDataArray);
+}
+
 async function outputDestData(dataObj){
   let destDataArray = [];
   
@@ -160,6 +184,7 @@ async function outputDestData(dataObj){
     testExisted[element.id] = 1;
   });
   //elasticsearch
+  await updateEsIndex_MenuItem(destDataArray);
   await updateEsIndex(destDataArray);
 
   //db
@@ -174,6 +199,7 @@ function statistic(){
 
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
+exports.updateEsIndex_MenuItem = updateEsIndex_MenuItem;
 
 //for test
 exports.makeDestData = makeDestData;

@@ -1,5 +1,6 @@
 let db = require('../common/dynamodb.js');
 let es = require('../common/elasticsearch.js');
+let menu = require('./update.js');
 let _ = require('lodash');
 
 let SourceTable = "MenusB2C";
@@ -28,6 +29,27 @@ async function createEsIndex(){
   return await es.initIndex(ES_INDEX, ES_FIELD, body);
 }
 
+async function createMenuItemIndex() {
+  let analyzer = {
+    type: 'text',
+    analyzer: 'standard'
+    //search_analyzer: 'standard'
+  };
+  let body = {
+    properties: {
+      menu_id: {
+        "type": "keyword"
+      },
+      item_id: {
+        "type": "keyword"
+      },
+      section_name: analyzer
+    }
+  };
+
+  return await es.initIndex('menuitem', 'menuItem_search', body);
+}
+
 function makeEsData(src) {
   let output = _.cloneDeep(src);
   
@@ -40,6 +62,8 @@ function makeEsData(src) {
 }
 
 async function updateEsIndex(destDataArray) {
+  await menu.updateEsIndex_MenuItem(destDataArray);
+  
   let esArray = destDataArray.map(element => makeEsData(element));
   return await es.updateIndex(ES_INDEX, ES_FIELD, esArray);
 }
@@ -57,6 +81,7 @@ async function go(){
   //init elasticsearch
   try {
     await createEsIndex();
+    await createMenuItemIndex();
 
     let dataArray = await getSourceData(SourceTable);
     return await updateEsIndex(dataArray);
