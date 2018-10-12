@@ -18,6 +18,12 @@ async function createEsIndex(){
   
   let body = {
     properties: {
+      id: {
+        type: "keyword"
+      },
+      menu_id: {
+        type: "keyword"
+      },
       restaurant_name: chinese_analyzer,
       branch_name: chinese_analyzer,
       name: chinese_analyzer,

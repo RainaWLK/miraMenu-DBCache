@@ -1,5 +1,6 @@
 let db = require('../common/dynamodb.js');
 let es = require('../common/elasticsearch.js');
+let item = require('./update.js');
 let _ = require('lodash');
 
 let SourceTable = "ItemsB2C";
@@ -16,6 +17,12 @@ async function createEsIndex(){
   
   let body = {
     properties: {
+      id: {
+        type: "keyword"
+      },
+      item_id: {
+        type: "keyword"
+      },
       restaurant_name: chinese_analyzer,
       branch_name: chinese_analyzer,
       name: chinese_analyzer,
@@ -27,19 +34,8 @@ async function createEsIndex(){
   return await es.initIndex(ES_INDEX, ES_FIELD, body);
 }
 
-function makeEsData(src) {
-  let output = _.cloneDeep(src);
-  
-  delete output.i18n;
-  delete output.photos;
-  delete output.itemControl;
-  delete output.resources;
-  
-  return output;
-}
-
 async function updateEsIndex(destDataArray) {
-  let esArray = destDataArray.map(element => makeEsData(element));
+  let esArray = destDataArray.map(element => item.makeEsData(element));
   return await es.updateIndex(ES_INDEX, ES_FIELD, esArray);
 }
 

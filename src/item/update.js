@@ -171,8 +171,8 @@ async function writeDestTable(table, dataArray){
 function makeEsData(src) {
   let output = _.cloneDeep(src);
   
-  delete output.i18n;
-  delete output.photos;
+  output.i18n = JSON.stringify(output.i18n);
+  output.photos = JSON.stringify(output.photos);
   delete output.itemControl;
   delete output.resources;
   
@@ -277,6 +277,7 @@ exports.update = update;
 exports.deleteData = deleteData;
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
+exports.makeEsData = makeEsData;
 
 //for test
 exports.getSourceData = getSourceData;
