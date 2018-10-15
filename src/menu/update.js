@@ -132,27 +132,63 @@ async function updateEsIndex(destDataArray) {
 }
 
 async function updateEsIndex_MenuItem(destDataArray) {
-  let esDataArray = [];
-  destDataArray.forEach(element => {
-    if(typeof element.sections !== 'object') {
-      return;
-    }
-    element.sections.forEach(section => {
-      if(typeof section.items !== 'object') {
-        return;
-      }
-      let esData = section.items.map(item_id => {
-        return {
-          id: item_id,
-          menu_id: element.menu_id,
-          item_id: item_id,
-          section_name: section.name
+  let menuItemObj = {}; //item_id: {id, menu_id, section_name, language...}
+  console.log('updateEsIndex_MenuItem');
+  
+  let makeIndex = destData => {
+    if(Array.isArray(destData.sections)) {
+      destData.sections.forEach(section => {
+        if(Array.isArray(section.items)) {
+          for(let i in section.items) {
+            let item_id = section.items[i];
+            
+            if(menuItemObj[item_id] === undefined) {
+              menuItemObj[item_id] = {
+                id: item_id,
+                menu_id: destData.menu_id,
+                item_id: item_id,
+                section_name: section.name,
+                language: []
+              };
+            }
+            if(menuItemObj[item_id].language.find(e => e === destData.language) !== undefined) {
+              console.log('item existed:' + item_id);
+              console.log('section_name='+section.name);
+              console.log('org section_name='+menuItemObj[item_id].section_name);
+              console.log('===skip===');
+            } else {
+              menuItemObj[item_id].language.push(destData.language);
+            }
+          }
         }
       });
-      esDataArray = esDataArray.concat(esData);
-    });
-    
+    }
+  }
+  
+  if(Array.isArray(destDataArray)) {
+    destDataArray.forEach(element => makeIndex(element));
+  } else {
+    makeIndex(destDataArray);
+  }
+  //menuItemObj to esDataArray
+  let esDataArray = [];
+  for(let id in menuItemObj) {
+    esDataArray.push(menuItemObj[id]);
+  }
+  console.log(esDataArray);
+  
+  //test
+  let tmp = {};
+  esDataArray.forEach(e => {
+    if(tmp[e.id] === undefined) {
+      tmp[e.id] = e;
+    } else {
+      console.log('dulpicated item:' + e.id);
+      console.log(tmp[e.id]);
+      console.log(e);
+    }
   });
+
   return await es.updateIndex('menuitem', 'menuItem_search', esDataArray);
 }
 
