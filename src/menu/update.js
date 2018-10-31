@@ -131,6 +131,17 @@ async function updateEsIndex(destDataArray) {
   return await es.updateIndex('menus', 'menu_search', esArray);
 }
 
+/*
+  {
+    item_id: {
+      id: _____,
+      menu_id: _____,
+      item_id: _____,
+      section_name: '',
+      language: ['en-us', 'zh-tw']
+    }
+  }
+*/
 async function updateEsIndex_MenuItem(destDataArray) {
   let menuItemObj = {}; //item_id: {id, menu_id, section_name, language...}
   console.log('updateEsIndex_MenuItem');
@@ -170,12 +181,13 @@ async function updateEsIndex_MenuItem(destDataArray) {
   } else {
     makeIndex(destDataArray);
   }
+  //console.log(menuItemObj);
   //menuItemObj to esDataArray
   let esDataArray = [];
   for(let id in menuItemObj) {
     esDataArray.push(menuItemObj[id]);
   }
-  console.log(esDataArray);
+  //console.log(esDataArray);
   
   //test
   let tmp = {};

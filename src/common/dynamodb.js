@@ -247,7 +247,7 @@ function batchGet(params){
     //params = fixEmptyValue(params);
 
     docClient.batchGet(params).promise().then(result => {
-      console.log("Batch get succeeded:", JSON.stringify(result, null, 2));
+      //console.log("Batch get succeeded:", JSON.stringify(result, null, 2));
       resolve(result);
     }).catch(err => {
       console.error("Batch get fail. Error JSON:", JSON.stringify(err, null, 2));

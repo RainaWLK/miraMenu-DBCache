@@ -202,13 +202,24 @@ function indices() {
   .catch(err => console.error(`Error connecting to the es client: ${err}`));
 };
 
+async function simpleSearch(index, body) {
+  try {
+    await checkConnection();
+    let response = await esClient.search({index: index, body: body});
+    return response;
+  }
+  catch(err) {
+    console.error(err);
+    throw err;
+  }
+}
+
 async function search(index, body) {
   try {
     await checkConnection();
     console.log(`keyword: ${body.query.multi_match.query}`);
     let response = await esClient.search({index: index, body: body});
     console.log(`found ${response.hits.total} items in ${response.took}ms`);
-    console.log(`returned article titles:`);
     let result = response.hits.hits.filter((hit, index) => {
       //log
       let output_log = `${body.from + ++index} - ${hit._source.id} - `;
@@ -242,4 +253,7 @@ exports.getIndex = getIndex;
 exports.updateIndex = updateIndex;
 exports.deleteIndex = deleteIndex;
 exports.deleteIndice = deleteIndice;
+exports.simpleSearch = simpleSearch;
 exports.search = search;
+
+exports.checkConnection = checkConnection;
