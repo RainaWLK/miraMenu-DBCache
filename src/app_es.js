@@ -4,8 +4,9 @@ let menu_es = require('./menu/init_es.js');
 let branch_es = require('./branch/init_es.js');
 let menuitem_es = require('./menuItem/init_es.js');
 
-async function writeES(){
+async function writeES(callback){
   try {
+    console.log('writeES');
     await branch_es.go();
     await item_es.go();
     await menu_es.go();
@@ -15,6 +16,10 @@ async function writeES(){
     console.log("writeES error");
     throw err;
   }
+
+  callback(null, "OK")
 }
 
-writeES();
+//writeES();
+
+exports.writeES = writeES;

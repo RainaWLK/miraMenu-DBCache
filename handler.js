@@ -1,6 +1,7 @@
 'use strict';
 let AWS = require('aws-sdk');
 let app = require('./build/app.js');
+let app_es = require('./build/app_es.js');
 
 
 function main(src, event, context, callback) {
@@ -45,8 +46,17 @@ module.exports.updateItem = (event, context, callback) => {
 module.exports.initES = (event, context, callback) => {
   console.log('initES');
   console.log(event);
-  console.log(context);
-  console.log(event.detail.attributes);
 
-  callback(null, "OK");
+  let desiredStatus = event.detail.desiredStatus;
+  let lastStatus = event.detail.desiredStatus;
+  console.log('desiredStatus='+desiredStatus);
+  console.log('lastStatus='+lastStatus);
+
+  if(desiredStatus === 'RUNNING' && lastStatus === 'RUNNING') {
+    console.log('run init es');
+    return app_es.writeES(callback);
+  }
+  else {
+    return callback(null, "OK");
+  }
 }

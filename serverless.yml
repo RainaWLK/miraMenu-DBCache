@@ -185,10 +185,10 @@ functions:
               - "aws.ecs"            
             detail-type:
               - "ECS Task State Change"
-              - "ECS Container Instance State Change"
+              #- "ECS Container Instance State Change"
             detail:
               clusterArn:
-                - "arn:aws:ecs:us-west-2:780139254791:cluster/miramenu-cluster"
+                - "arn:aws:ecs:us-west-2:780139254791:cluster/miramenu-b2c-server"
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
