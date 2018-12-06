@@ -220,7 +220,7 @@ async function outputDestData(dataObj){
   }
   //elasticsearch
   //console.log('destDataArray=');
-  //console.log(destDataArray);
+  console.log(destDataArray);
   await updateEsIndex(destDataArray);
 
   //db

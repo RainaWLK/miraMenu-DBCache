@@ -11,7 +11,13 @@ async function createEsIndex() {
   };
   let body = {
     properties: {
+      id: {
+        "type": "keyword"
+      },
       item_id: {
+        "type": "keyword"
+      },
+      restaurant_id: {
         "type": "keyword"
       }
     }
