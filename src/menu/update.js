@@ -142,6 +142,7 @@ async function updateEsIndex(destDataArray) {
     }
   }
 */
+/*
 async function updateEsIndex_MenuItem(destDataArray) {
   let menuItemObj = {}; //item_id: {id, menu_id, section_name, language...}
   console.log('updateEsIndex_MenuItem');
@@ -203,6 +204,7 @@ async function updateEsIndex_MenuItem(destDataArray) {
 
   return await es.updateIndex('menuitem', 'menuItem_search', esDataArray);
 }
+*/
 
 async function outputDestData(dataObj){
   let destDataArray = [];
@@ -233,7 +235,7 @@ async function outputDestData(dataObj){
     testExisted[element.id] = 1;
   });
   //elasticsearch
-  await updateEsIndex_MenuItem(destDataArray);
+  //await updateEsIndex_MenuItem(destDataArray);
   await updateEsIndex(destDataArray);
 
   //db
@@ -248,7 +250,7 @@ function statistic(){
 
 exports.SourceTable = SourceTable;
 exports.outputDestData = outputDestData;
-exports.updateEsIndex_MenuItem = updateEsIndex_MenuItem;
+//exports.updateEsIndex_MenuItem = updateEsIndex_MenuItem;
 
 //for test
 exports.makeDestData = makeDestData;

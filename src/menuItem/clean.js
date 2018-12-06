@@ -1,37 +1,47 @@
 const db = require('../common/dynamodb.js');
 const utils = require('../common/utils.js');
-let I18n = require('../common/i18n.js');
 let es = require('../common/elasticsearch.js');
 let _ = require('lodash');
 
-const DestTable = "MenusB2C";
-
-async function getIdDelete(newData, id_delete) {
+async function getIdDelete(newData, restaurant_id) {
   try {
-    let newMenusData = newData.menus;
-    let sourceDataArray = null;
-    if(newData.branch.restaurant_query === false) {
-      let branch_id = newData.branch.branch_id;
-      sourceDataArray = await db.queryByKey('MenusB2C', 'branch_id-index', 'branch_id', branch_id);
-    } else {
-      return;
-    }
+    let body = {
+      size: 9999,
+      from: 0,
+      "query": {
+        "term" : {
+          "restaurant_id" : restaurant_id
+        }
+      },
+      sort: [
+        { "restaurant_id": "desc" },
+        "_score"
+      ]
+    };
+    
   
+    let response = await es.simpleSearch("menuitem_new", body);
+    console.log('newData=');
+    console.log(newData);
+    console.log('esData=');
+    console.log(response.hits.hits);
     //search non-existed
-    sourceDataArray.forEach(menuData => {
-      let menu_id = menuData.menu_id;
-      if(newMenusData[menu_id] === undefined) {
-        console.log(menuData.id+' not existed');
-        id_delete.push(menuData.id);
+    let id_delete = response.hits.hits.filter(element => {
+      if(newData.find(e => e.item_id === element._source.item_id) === undefined) {
+        return true;
       }
-    });
-    return;
+      return false;
+    }).map(e => e._source.item_id);
+    console.log('id_delete=');
+    console.log(id_delete);
+
+    return id_delete;
   }
   catch(err) {
-    if(err.statusCode === 404) {
-      console.log('no data need to be clean, skip');
-      return;
-    }
+    //if(err.statusCode === 404) {
+    //  console.log('no data need to be clean, skip');
+    //  return;
+    //}
     console.error(err);
     throw err;
   }
@@ -40,25 +50,11 @@ async function getIdDelete(newData, id_delete) {
 
 async function clean(id_delete) {
   try {
-    if(id_delete.length == 0) {
-      return;
-    }
-    let params = {
-      RequestItems: {}
-    };
-    params.RequestItems[DestTable] = [];
-    
     for(let i in id_delete) {
-      let request = {
-        DeleteRequest: {
-          Key: { id: id_delete[i] }
-        }
-      }
-      params.RequestItems[DestTable].push(request);
-      await es.deleteIndex('menus', 'menu_search', id_delete[i]);
+      console.log('delete es:'+id_delete[i]);
+      await es.deleteIndex('menuitem_new', 'menuItem_search', id_delete[i]);
     }
-    //console.log(JSON.stringify(params));
-    return await db.batchWrite(params);
+    return;
   }
   catch(err) {
     console.error(err);
@@ -67,16 +63,9 @@ async function clean(id_delete) {
 }
 
 
-async function go(inputData) {
-  let id_delete = [];
+async function go(newData, restaurant_id) {
   try {
-    if(Array.isArray(inputData)) {
-      for(let i in inputData) {
-        await getIdDelete(inputData[i], id_delete);
-      }
-    } else {
-      await getIdDelete(inputData, id_delete);
-    }
+    let id_delete = await getIdDelete(newData, restaurant_id);
     await clean(id_delete);
   }
   catch(err) {
@@ -85,7 +74,6 @@ async function go(inputData) {
 }
 
 exports.go = go;
-exports.clean = clean;
 
 //for test
 exports.getIdDelete = getIdDelete;

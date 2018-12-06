@@ -97,8 +97,14 @@ async function getSourceData(restaurant_id){
     
     //get menus
     let menusArray = await getMenus(menu_ids);
-    //console.log(menusArray);
+    console.log('get source data: menusArray');
+    for(let i in menusArray) {
+      console.log(menusArray[i].id);
+      console.log(menusArray[i].sections);
+      console.log('----------');
+    }
     return {
+      restaurant_id: restaurant_id,
       menuByBranch: menuByBranch,
       menus: menusArray
     };
@@ -112,7 +118,9 @@ async function getSourceData(restaurant_id){
 /*
   [
     {
+      id: item_id,
       item_id: item_id,
+      restaurant_id: restaurant_id,
       menu: [
         {
           menu_id: menu_id,
@@ -156,9 +164,12 @@ function makeDestData(dataObj) {
   //transform to output format
   let outputArray = [];
   for(let item_id in itemByMenu) {
-    let itemData = {};
-    itemData.item_id = item_id;
-    itemData.menu = [];
+    let itemData = {
+      id: item_id,
+      item_id: item_id,
+      restaurant_id: dataObj.restaurant_id,
+      menu: []
+    };
     for(let menu_id in itemByMenu[item_id]) {
       let menuData = {
         menu_id: menu_id,
@@ -180,13 +191,14 @@ async function updateEsIndex(esArray) {
 
 async function update(restaurant_id) {
   try {
+    console.log('menuitem update:' + restaurant_id);
     const dataObj = await getSourceData(restaurant_id);
   
     let itemsByMenuArray = makeDestData(dataObj);
     
     //clean deleted b2c data first
-    //await itemClean.go(dataObj);
-  
+    await itemClean.go(itemsByMenuArray, restaurant_id);
+    //update
     await updateEsIndex(itemsByMenuArray);
   }
   catch(err) {

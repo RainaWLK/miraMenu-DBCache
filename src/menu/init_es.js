@@ -68,7 +68,7 @@ function makeEsData(src) {
 }
 
 async function updateEsIndex(destDataArray) {
-  await menu.updateEsIndex_MenuItem(destDataArray);
+  //await menu.updateEsIndex_MenuItem(destDataArray);
   
   let esArray = destDataArray.map(element => makeEsData(element));
   return await es.updateIndex(ES_INDEX, ES_FIELD, esArray);
@@ -87,7 +87,7 @@ async function go(){
   //init elasticsearch
   try {
     await createEsIndex();
-    await createMenuItemIndex();
+    //await createMenuItemIndex();
 
     let dataArray = await getSourceData(SourceTable);
     return await updateEsIndex(dataArray);
