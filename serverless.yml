@@ -42,12 +42,16 @@ provider:
   stage: dev
   region: us-west-2
 # VPC
-  vpc:
-      securityGroupIds:
-        - sg-a9ae7ed6
-      subnetIds:
-        - subnet-bd239fe7
-        - subnet-866a7cce
+#  vpc:
+#      securityGroupIds:
+#        #- sg-a9ae7ed6
+#        - sg-e8d57f98
+#      subnetIds:
+        #- subnet-bd239fe7
+        #- subnet-866a7cce
+#        - subnet-d453888e
+#        - subnet-0da53227a62ad6f9a
+
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
     - Effect: "Allow"

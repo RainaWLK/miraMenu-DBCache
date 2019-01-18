@@ -1,6 +1,6 @@
 let _ = require('lodash');
 const elasticsearch = require('elasticsearch');
-const esClient = new elasticsearch.Client({
+let esClient = new elasticsearch.Client({
   //aws elasticsearch
   //hosts: [ 'https://vpc-miramenu-mbynmdnepcr7oxinykkzoi6qdy.us-west-2.es.amazonaws.com']
   //ECS ALB
@@ -17,9 +17,15 @@ function sleep(wait = 0) {
   })
 };
 
-async function connect() {
+async function connect(host) {
   let retry = 5;
   
+  if(host !== undefined) {
+    esClient = new elasticsearch.Client({
+      hosts: [ host ]
+    });
+  }
+
   while(retry > 0) {
     console.log('retry:' + retry);
     try {
@@ -39,7 +45,7 @@ function checkConnection() {
   
   return new Promise((resolve, reject) => {
     esClient.cluster.health({
-      waitForStatus: 'yellow'
+      waitForStatus: 'red'
     }, (err) => {
       if(err) {
         console.error('elasticsearch cluster is down!');
@@ -69,6 +75,18 @@ async function initIndex(index, type, schema) {
       console.log(result1);
       console.log("====purge done====");
     }
+
+    console.log("====template====");
+    await esClient.indices.putTemplate({
+      name: "default_template",
+      body: {
+        "index_patterns": ["*"],
+        "settings" : {
+          "number_of_replicas": 0
+        }
+      }
+    });
+    console.log("====template done====");
 
     console.log("====create====");
     let result2 = await esClient.indices.create(params);
@@ -257,3 +275,4 @@ exports.simpleSearch = simpleSearch;
 exports.search = search;
 
 exports.checkConnection = checkConnection;
+exports.connect = connect;

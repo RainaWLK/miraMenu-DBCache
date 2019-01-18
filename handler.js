@@ -3,7 +3,6 @@ let AWS = require('aws-sdk');
 let app = require('./build/app.js');
 let app_es = require('./build/app_es.js');
 
-
 function main(src, event, context, callback) {
   console.log(event);
   console.log(context);
@@ -54,7 +53,7 @@ module.exports.initES = (event, context, callback) => {
 
   if(desiredStatus === 'RUNNING' && lastStatus === 'RUNNING') {
     console.log('run init es');
-    return app_es.writeES(callback);
+    return app_es.writeES(event, callback);
   }
   else {
     return callback(null, "OK");
