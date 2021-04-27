@@ -33,7 +33,7 @@
     "chai": "^4.1.2",
     "chai-things": "^0.2.0",
     "mocha": "^5.2.0",
-    "redis": "^2.8.0",
+    "redis": "^3.1.1",
     "serverless": "^1.27.2",
     "serverless-offline": "^3.23.0",
     "serverless-plugin-include-dependencies": "^3.1.0",
