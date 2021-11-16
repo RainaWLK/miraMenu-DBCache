@@ -50,7 +50,7 @@
     "serverless-offline-sns": "^0.30.0"
   },
   "optionalDependencies": {
-    "aws-sdk": "^2.128.0"
+    "aws-sdk": "^2.814.0"
   },
   "homepage": "https://github.com/RainaWLK/DBCache#readme"
 }
