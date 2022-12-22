@@ -35,7 +35,7 @@
     "mocha": "^5.2.0",
     "redis": "^2.8.0",
     "serverless": "^1.27.2",
-    "serverless-offline": "^3.23.0",
+    "serverless-offline": "^12.0.3",
     "serverless-plugin-include-dependencies": "^3.1.0",
     "serverless-webpack": "^3.1.1",
     "webpack": "^3.12.0",
